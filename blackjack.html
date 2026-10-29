@@ -87,6 +87,11 @@ label { display: inline-flex; align-items: center; gap: 6px; }
 .drill-cards { display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap; }
 .small { font-size: 12px; color: var(--muted); }
 .legend span { display: inline-block; padding: 1px 6px; margin-right: 6px; border-radius: 3px; color: var(--c-text); font-size: 12px; }
+.story { margin: 6px 0; border-top: 1px solid var(--border); padding-top: 6px; }
+.story summary { cursor: pointer; font-weight: 600; }
+.story p { margin: 8px 0; font-size: 14px; }
+.story table { margin: 6px 0; }
+.story td:first-child, .story th:first-child { text-align: left; }
 </style>
 </head>
 <body>
@@ -345,6 +350,93 @@ label { display: inline-flex; align-items: center; gap: 6px; }
         <div id="facts-misc" class="small"></div>
       </div>
     </aside>
+  </div>
+  <div class="panel">
+    <h3>Stories and explanations</h3>
+    <p class="small">Questions that came up while building this trainer, answered in prose. Click a title to expand it.</p>
+    <details class="story">
+      <summary>What does EV mean?</summary>
+      <p>EV is expected value: the average amount you would win or lose per unit of your original bet if you took that action in exactly this situation many times, with the dealer finishing the hand and the remaining cards drawn from the current shoe. For example, hard 13 against a dealer 4 at a fresh shoe:</p>
+      <table class="chart"><tr><th>Action</th><th>EV</th><th>Meaning</th></tr>
+      <tr><td>Stand</td><td>−0.224</td><td>lose about 22 cents per dollar bet, on average</td></tr>
+      <tr><td>Hit</td><td>−0.270</td><td>lose about 27 cents per dollar bet</td></tr>
+      <tr><td>Surrender</td><td>−0.500</td><td>always exactly half the bet</td></tr>
+      <tr><td>Double</td><td>−0.539</td><td>lose about 54 cents per original dollar, because the bet is doubled</td></tr></table>
+      <p><b>The sign is from your side.</b> Positive means you expect to win money, negative means you expect to lose. Most hands in blackjack have negative EV for every option; the goal is to pick the least bad one.</p>
+      <p><b>The scale is your initial bet.</b> Double and split can exceed −1 or +1 because they put more money on the table. Surrender is always exactly −0.5.</p>
+      <p><b>Cost is the gap.</b> When you pick something other than the best option, the cost is the difference in EV. Hitting 13 against a 4 instead of standing costs 0.045, about 4.5 cents per dollar bet. A mistake costing 0.002 is nearly free and one costing 0.3 is a disaster, so the number tells you which mistakes matter.</p>
+      <p><b>It uses the actual shoe.</b> The EVs are computed from the cards still unseen, not from a fixed chart. That is why the same hand can show different EVs on different deals, and why the EV-best action can occasionally disagree with basic strategy when the count is extreme. That disagreement is exactly what index plays exploit.</p>
+      <p><b>"Your edge next hand"</b> is the same idea applied before you see any cards: the average result per unit bet over all possible deals from the current shoe, assuming you then play every hand optimally. Around −0.4% for a fresh six-deck shoe, climbing positive as the shoe gets rich in tens and aces.</p>
+    </details>
+    <details class="story">
+      <summary>Aces and tens are your friends, small cards are the dealer's</summary>
+      <p>Both aces and tens are the player's friends while they are still in the shoe. Hi-Lo counts them both as −1 for that reason: when you see one leave, the shoe got worse for you.</p>
+      <p><b>Blackjacks.</b> You and the dealer get them equally often, but yours pays 3:2 and the dealer's only takes your bet. More tens and aces means more blackjacks, and that asymmetry is the single biggest source of a counter's edge.</p>
+      <p><b>Doubles.</b> You double on 9, 10 and 11 hoping for a ten. The dealer never gets to double.</p>
+      <p><b>Dealer busts.</b> The dealer must hit stiff hands of 12 to 16 no matter what. A ten-rich shoe busts those hands more often, and you can choose to stand and let it happen.</p>
+      <p><b>Insurance</b> becomes profitable when tens are abundant, which is why it is taken at true count +3.</p>
+      <p>Low cards 2 through 6 are the dealer's friends. They rescue the dealer's stiff hands, make your doubles weak, and make blackjacks rarer. Where the ten and the ace differ: an extra ace helps blackjacks the most, so betting systems love aces, which is the whole idea of Ace-Five. Tens matter more for playing, because the stand, double and insurance indices all depend on ten density, while an ace drawn to a stiff hand only counts as 1. The slogan: high cards left in the shoe are good for you, low cards left in the shoe are good for the dealer, and the count is just a running tally of which side has been dealt out.</p>
+    </details>
+    <details class="story">
+      <summary>If tens are good, why never split a pair of tens?</summary>
+      <p>Because tens in the shoe and tens in your hand are different things. Here is the arithmetic from the analyzer at a fresh shoe, in units of the original bet:</p>
+      <table class="chart"><tr><th>Dealer up</th><th>Stand on 20</th><th>Split into two hands</th><th>Each new hand is worth</th></tr>
+      <tr><td>2</td><td>+0.64</td><td>+0.37</td><td>+0.18</td></tr>
+      <tr><td>5</td><td>+0.67</td><td>+0.51</td><td>+0.26</td></tr>
+      <tr><td>6</td><td>+0.70</td><td>+0.58</td><td>+0.29</td></tr>
+      <tr><td>7</td><td>+0.77</td><td>+0.51</td><td>+0.26</td></tr>
+      <tr><td>9</td><td>+0.76</td><td>+0.23</td><td>+0.12</td></tr>
+      <tr><td>10</td><td>+0.56</td><td>+0.05</td><td>+0.03</td></tr>
+      <tr><td>A</td><td>+0.66</td><td>+0.16</td><td>+0.08</td></tr></table>
+      <p><b>The break-even test.</b> Splitting turns one bet into two, so it only pays if a single hand that starts with a ten is worth more than half of what the 20 is worth. A 20 is worth about +0.65 to +0.79, so each split hand would need to be worth more than +0.33 to +0.40. A hand starting with a ten is in fact worth about +0.2 to +0.3 against a weak dealer card and almost nothing against a strong one. You are trading one near-certain winner for two merely decent hands and losing a third of your expectation, even in the best case against a 6.</p>
+      <p><b>Why "tens are good" does not contradict this.</b> Tens help you when they are still in the shoe, because the next one may land on your double, make your blackjack, or bust the dealer's stiff hand. Tens in your hand are a finished product. The statement is about the composition of the remaining cards, not about the hand you hold.</p>
+      <p><b>Where the two ideas meet.</b> If the shoe becomes rich enough in tens, each split hand starting with a ten improves, because its next card is likely another ten for a second 20, and a dealer showing a 5 or 6 busts more often. Against a 6, standing stays better until Hi-Lo true count +4 and splitting pulls ahead at +5. That is exactly the index play in the Illustrious 18: split 10,10 against a 6 at +4 and against a 5 at +5. Counters do split tens, but only when the shoe is so ten-rich that the second hand is worth it, and they know the whole table will stare at them when they do.</p>
+    </details>
+    <details class="story">
+      <summary>A dealer 5 is weak, but a 5 in the shoe is strong. Why?</summary>
+      <p>The two facts are the same mechanism seen from two sides.</p>
+      <p><b>A 5 showing is a card the dealer is stuck with.</b> The dealer's hand is on a fixed script: hit to 17, no doubles, no choice. Starting from a 5, the dealer most often reaches a stiff 12 to 16 and is then forced to draw again, so the bust rate is 42%, the highest of any up card alongside the 6. Your doubles against a 5 or 6 are good because you are betting that the dealer will bust, and because you can stop at any total you like while the dealer cannot.</p>
+      <p><b>A 5 still in the shoe is a card the dealer is hoping to draw.</b> From any stiff total, a 5 turns the dealer's hand into 17 through 21 without the risk of busting. That is the rescue card. It does little for you in comparison, because on a stiff you often do not draw at all, and when you double on 10 or 11 you want a 10, not a 5. So every 5 that remains among the unseen cards raises the chance that the dealer's forced draws will succeed, which is why the effect-of-removal table shows the 5 as the card whose departure helps you most.</p>
+      <p><b>Same logic in reverse for the 10.</b> A dealer showing a 10 is strong, since 10 is the best start for a hand that must reach 17 anyway. But a 10 waiting in the shoe is your friend, because it busts the dealer's stiffs, completes your doubles and makes your 3:2 blackjacks. The sign flips between "what the dealer has" and "what is left to come", and the dealer's compulsory hitting drives both: a small up card is weak because the dealer must build on it, and a small card in the shoe is strong for the house because it is what that building needs.</p>
+    </details>
+    <details class="story">
+      <summary>What does "re-split aces" mean?</summary>
+      <p>When you split a pair of aces, almost every casino gives each ace exactly one more card and then your turn on those hands is over. You cannot hit, double, or split again. If one of those single cards happens to be another ace, you are normally stuck with a soft 12.</p>
+      <p>"Re-split aces" is the rule variation that lets you split that second pair of aces too, instead of being frozen with the 12. It is worth about 0.06% to the player, so it is a small but real favourable rule, and it is fairly uncommon. In this trainer it is off by default: after you split aces, each hand gets one card and is finished automatically. With it on, you can split again on a split-ace hand that drew an ace, up to the usual four-hand limit. Either way an ace plus a ten after a split counts as 21, not blackjack, and pays even money. The basic-strategy answer is unchanged: always split aces.</p>
+    </details>
+    <details class="story">
+      <summary>Hi-Lo fits on a page. Why did Thorp need a whole book?</summary>
+      <p>Thorp did not write a book about Hi-Lo. Hi-Lo came later, from other people, and its simplicity is the product of a decade of refinement that started with his book.</p>
+      <p><b>What Beat the Dealer actually contained (1962).</b> The system in the first edition was the Ten Count. You keep two running numbers, non-tens remaining and tens remaining, and divide them to get a ratio. The fresh-deck ratio is 36 to 16, or 2.25, and the deck favours you when the ratio drops below about 2.0. That is much harder to do at table speed than adding plus and minus ones, and the book spends many pages on how to practise it, how to approximate it, and when to bet. He also gave the Five Count, a crude system that tracks only the fives, as a stepping stone for beginners.</p>
+      <p><b>Why so much more than a counting rule.</b> In 1962 the claim that a casino game could be beaten was radical, and most of the book is the argument, not the recipe: the mathematics of why blackjack differs from roulette, since cards dealt are not replaced and the player's edge swings with the composition; basic strategy itself, which Baldwin, Cantey, Maisel and McDermott had published in 1956 in a statistics journal, done on desk calculators, and which Thorp recomputed on an IBM 704 at MIT and put in a form a gambler could memorise; betting and bankroll, where he applied Kelly's criterion, learned from Claude Shannon, and explained ruin probability; the field test, the 1961 Reno and Lake Tahoe trip bankrolled by Manny Kimmel, which proved the theory against real dealers; and casino countermeasures, dealer cheating and how to detect it, and the Las Vegas rule changes of 1964 that were reversed within weeks when players stopped coming.</p>
+      <p><b>Where Hi-Lo came from.</b> Harvey Dubner presented a simple plus-minus count at a computer conference in 1963, a year after the book. Julian Braun, an IBM programmer, then ran the simulations that gave it correct index numbers. Thorp included that work as the "complete point count" in his 1966 second edition, which is the version most people read today. Stanford Wong's Professional Blackjack in 1975 and Don Schlesinger's later work produced the Illustrious 18 that this trainer's drill uses. The counting rule is a page; the proof that it was worth learning took a book.</p>
+    </details>
+    <details class="story">
+      <summary>The story of hole-carding</summary>
+      <p>Hole-carding is one of the great chapters of advantage play, and unlike counting it was never really about math. It was about dealers being human.</p>
+      <p><b>How it happens.</b> Before card-reading devices, a dealer showing a ten or an ace had to lift the corner of the hole card to check for blackjack. A sloppy dealer lifted it an inch too high, and a player sitting at first base, looking along the felt at a low angle, could see the index. That is "first-basing". Some dealers also tilted the card while sliding it under the up card at the deal, flashing it to the whole table, which players called "front-loading". The information came unevenly: a good dealer gave nothing, a bad one gave a glimpse on most hands, and often the glimpse told you only "paint" or "small". Professionals scouted casinos for weak dealers the way counters scouted for deep penetration, kept notebooks of dealer names and shifts, and sat for hours at a specific seat when a known "flasher" was on.</p>
+      <p><b>The legal twist.</b> In Nevada, using your own eyes from your own seat is not cheating. The Nevada Supreme Court said so in 1984 in the Einbinder and Dale case: the dealer's carelessness is the casino's problem, and a player is not obliged to look away. Two things remain crimes there: using any device, a mirror or a phone camera, and "spooking", where a confederate stands behind the dealer and signals the hole card to the player. Other jurisdictions are less forgiving, and everywhere the casino can simply bar you. So a hole-carder's real risk was not arrest but the backroom conversation and the trespass notice.</p>
+      <p><b>The famous case.</b> James Grosjean, a University of Chicago-trained mathematician, became the best-known hole-carder and wrote the field's bible, Beyond Counting, which covers what each kind of partial information is worth and how to play it. In 2000 he and a partner were detained at Caesars Palace and then at the Imperial Palace in Las Vegas on suspicion of cheating, when they had only been reading flashed cards. He sued both casinos and the Griffin detective agency that circulated player profiles to the industry, won, and the judgments helped push Griffin into bankruptcy in 2005. He was elected to the Blackjack Hall of Fame the next year. His writing is also where the figure comes from that the superpower table above confirms: full hole-card knowledge is worth on the order of ten percent or more, far beyond anything counting can achieve.</p>
+      <p><b>A softer cousin.</b> Steve Forte's 1986 book Read the Dealer described "tell play": not seeing the card but reading the dealer's reaction to it, a second look at a stiff card, a relaxed posture on a made hand. That is the probabilistic version of the tightest disguise row above, a small but real edge with plays that look completely normal.</p>
+      <p><b>How casinos killed it.</b> The fix was not surveillance but procedure. Card-reading mirrors and then electronic peek devices let the dealer check for blackjack without lifting the card. Dealers were trained to deal the hole card flat and low. Many jurisdictions, Europe above all, moved to "no hole card" rules where the dealer takes the second card only after all players have acted, which makes the information not exist. Modern hole-carding survives mostly in carnival games like Three Card Poker and Ultimate Texas Hold'em, where dealers handle more cards with less drilled procedure.</p>
+      <p><b>The next-card superpower has a real cousin too.</b> Nobody sees the next card, but "ace sequencing" and shuffle tracking try to predict it: memorise the cards around an ace before a weak shuffle, then bet big when the sequence is about to reappear. Tommy Hyland's team was arrested for it in Windsor, Ontario in 1994, and the judge dismissed the case, ruling that remembering cards is skill, not cheating. The modern bookend is Phil Ivey's edge-sorting at baccarat, where tiny asymmetries in card backs told him the high cards: courts in London in 2017 and New Jersey ruled that was over the line, and he had to return about twenty million dollars. The through-line of all these stories is the one the superpower table shows: information about unseen cards is worth more than any amount of skill with the seen ones, which is exactly why casinos guard it so fiercely.</p>
+    </details>
+    <details class="story">
+      <summary>Was such a balanced game designed on purpose?</summary>
+      <p>Mostly by accident, in the sense that nobody computed it, but not purely by luck: the rules were shaped by a century of market pressure between players who wanted options and houses that knew their long-run hold from the cash box, even when they could not calculate it.</p>
+      <p><b>Where each piece came from.</b> The bust-first rule is the ancestral game: vingt-et-un in 18th-century France already had the player drawing before the banker, and that single asymmetry is worth about 8 percentage points to the house if you simply mimic the dealer. Everything else in the game is a giveaway carved out of that. The 3:2 bonus is a marketing invention: around 1930, when Nevada legalised gambling, some houses paid 10:1 for an ace of spades with a black jack to lure players to a table game nobody knew; the promotion died, the name stuck, and a 3:2 payout on any natural remained as the standard sweetener. Doubling and splitting spread the same way, operator by operator, as attractions. Each one can only help a player who uses it well, so each was a concession the house made to fill seats, trusting the bust rule to keep the whole thing profitable. Surrender, double after split and re-splitting are later, mostly post-1960s concessions in the same tradition.</p>
+      <table class="chart"><tr><th>Component</th><th>Edge</th></tr>
+      <tr><td>Mimic the dealer, player busts first</td><td>about −5.5%</td></tr>
+      <tr><td>Standing correctly on stiffs</td><td>+3.2%</td></tr>
+      <tr><td>Blackjack paid 3:2</td><td>+2.3%</td></tr>
+      <tr><td>Doubling</td><td>+1.5%</td></tr>
+      <tr><td>Splitting</td><td>+0.4%</td></tr>
+      <tr><td>Late surrender</td><td>+0.1%</td></tr>
+      <tr><td>Net, basic strategy</td><td>about −0.4%</td></tr></table>
+      <p>These published decompositions for a six-deck game are approximate and overlap a little, but the picture is right. The house's whole edge is one rule, and the player's whole defence is a pile of smaller options that were added to make the game attractive.</p>
+      <p><b>Why it landed near zero.</b> Operators measured their hold empirically and tuned rules by survival: a house with too many concessions went broke, a house with too few lost its players. That selection pushed the game toward a thin margin without anyone knowing the number. Casinos themselves believed the edge was about 5% before Baldwin's group computed basic strategy in 1956, and they were right about the average customer, who played badly. The near-balance only became visible once someone did the arithmetic.</p>
+      <p><b>After the computer era.</b> The fine tuning is deliberate now, and it runs the other way. Hit soft 17 is worth 0.2 points to the house, no double after split 0.14, blackjack paid 6:5 about 1.4, and continuous shufflers kill counting. Everything in the Settings tab exists because a casino analyst computed exactly what it was worth. The old game was balanced by accident and competition; the modern variants are unbalanced on purpose.</p>
+    </details>
   </div>
 </section>
 
