@@ -1,0 +1,1880 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>21点训练器</title>
+<style>
+:root {
+  --bg: #efece4; --panel: #ffffff; --text: #1c1c1c; --muted: #6a6a6a;
+  --border: #d8d4ca; --felt: #2f6b4f; --felt-text: #f4f4f4;
+  --btn: #e6e2d8; --btn-text: #1c1c1c; --accent: #1f6f46; --accent-text: #fff;
+  --good: #2a9d4a; --bad: #d13b3b; --warn: #c98a12;
+  --c-h: #f1f1f1; --c-s: #ffe08a; --c-d: #9fe0b0; --c-p: #9fc8f5; --c-r: #d8b4f8; --c-text: #1c1c1c;
+  --div-neg: #ec7c55; --div-mid: #f0efec; --div-pos: #2fa892;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15171a; --panel: #1f2226; --text: #e8e6e1; --muted: #9a9a9a;
+    --border: #353a40; --felt: #1f4a38; --felt-text: #f4f4f4;
+    --btn: #2d3238; --btn-text: #e8e6e1; --accent: #4fbf7a; --accent-text: #0e1a13;
+    --good: #4fd072; --bad: #ff6b6b; --warn: #f0b64a;
+    --c-h: #3a3f45; --c-s: #8a6d1e; --c-d: #2a6b3c; --c-p: #2a4f7a; --c-r: #5a3a80; --c-text: #f4f4f4;
+    --div-neg: #b54a2e; --div-mid: #383835; --div-pos: #128f78;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15171a; --panel: #1f2226; --text: #e8e6e1; --muted: #9a9a9a;
+  --border: #353a40; --felt: #1f4a38; --felt-text: #f4f4f4;
+  --btn: #2d3238; --btn-text: #e8e6e1; --accent: #4fbf7a; --accent-text: #0e1a13;
+  --good: #4fd072; --bad: #ff6b6b; --warn: #f0b64a;
+  --c-h: #3a3f45; --c-s: #8a6d1e; --c-d: #2a6b3c; --c-p: #2a4f7a; --c-r: #5a3a80; --c-text: #f4f4f4;
+  --div-neg: #b54a2e; --div-mid: #383835; --div-pos: #128f78;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; }
+header { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px 16px; border-bottom: 1px solid var(--border); }
+header h1 { font-size: 18px; margin: 0 12px 0 0; }
+.tabs button { padding: 6px 12px; }
+.tabs button.on { background: var(--accent); color: var(--accent-text); }
+main { max-width: 1100px; margin: 0 auto; padding: 12px 16px 40px; }
+.hidden { display: none !important; }
+button { background: var(--btn); color: var(--btn-text); border: 1px solid var(--border); border-radius: 6px; padding: 8px 14px; font: inherit; cursor: pointer; }
+button:disabled { opacity: .4; cursor: default; }
+button.primary { background: var(--accent); color: var(--accent-text); border-color: transparent; font-weight: 600; }
+input[type=number], select { font: inherit; padding: 5px 7px; border: 1px solid var(--border); border-radius: 6px; background: var(--panel); color: var(--text); width: 90px; }
+select { width: auto; }
+label { display: inline-flex; align-items: center; gap: 6px; }
+.layout { display: grid; grid-template-columns: 1fr 400px; gap: 14px; }
+.layout > * { min-width: 0; } /* let .chart-wrap scroll instead of widening the page on phones */
+@media (max-width: 820px) { .layout { grid-template-columns: 1fr; } }
+.felt { background: var(--felt); color: var(--felt-text); border-radius: 12px; padding: 14px; min-height: 300px; }
+.felt .label { font-size: 12px; opacity: .8; text-transform: uppercase; letter-spacing: .05em; }
+.hand { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-height: 76px; margin: 4px 0 10px; }
+.hand.active { outline: 2px solid #ffd766; outline-offset: 4px; border-radius: 6px; }
+.hand .total { margin-left: 8px; font-weight: 600; }
+.hand .tag { font-size: 12px; padding: 2px 6px; border-radius: 4px; background: rgba(0,0,0,.35); }
+.card { width: 48px; height: 68px; border-radius: 6px; background: #fff; color: #111; border: 1px solid #999; display: flex; flex-direction: column; justify-content: space-between; padding: 4px 5px; font-weight: 700; font-size: 16px; line-height: 1; box-shadow: 0 1px 3px rgba(0,0,0,.4); }
+.card.red { color: #c81e1e; }
+.card.back { background: repeating-linear-gradient(45deg, #7a2b2b, #7a2b2b 4px, #5a1d1d 4px, #5a1d1d 8px); border-color: #ccc; }
+.card .s { align-self: flex-end; font-size: 20px; }
+.card.flash { width: 84px; height: 120px; font-size: 30px; padding: 8px; }
+.card.flash .s { font-size: 36px; }
+.infobar { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 8px; font-size: 13px; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+.betrow { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 10px 0; }
+.msg { min-height: 48px; padding: 10px 12px; border-radius: 8px; background: var(--panel); border: 1px solid var(--border); white-space: pre-line; }
+.msg.good { border-color: var(--good); } .msg.bad { border-color: var(--bad); }
+.panel { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 12px; margin-bottom: 12px; }
+.panel h3 { margin: 0 0 8px; font-size: 14px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+.stat { display: flex; justify-content: space-between; padding: 2px 0; font-size: 14px; }
+.stat b { font-variant-numeric: tabular-nums; }
+.settings .row { display: flex; flex-wrap: wrap; gap: 10px 18px; margin: 6px 0; align-items: center; }
+.chart { border-collapse: collapse; font-size: 12px; font-variant-numeric: tabular-nums; }
+.chart th, .chart td { border: 1px solid var(--border); padding: 2px 3px; text-align: center; min-width: 22px; color: var(--c-text); }
+.chart th { background: var(--panel); color: var(--text); }
+.chart td.H { background: var(--c-h); } .chart td.S { background: var(--c-s); } .chart td.D { background: var(--c-d); }
+.chart td.P { background: var(--c-p); } .chart td.R { background: var(--c-r); }
+.chart td.hl { outline: 3px solid var(--bad); outline-offset: -3px; font-weight: 700; }
+.chart-wrap { overflow-x: auto; }
+.evmap td { font-size: 11px; padding: 2px 2px; min-width: 28px; color: var(--text); font-variant-numeric: tabular-nums; cursor: default; }
+.evmap td.hl { outline: 3px solid var(--text); outline-offset: -3px; font-weight: 700; }
+.evlegend { display: flex; align-items: center; gap: 6px; font-size: 12px; margin-top: 6px; }
+.evlegend .bar { flex: 1; height: 10px; border-radius: 3px; background: linear-gradient(90deg, var(--div-neg), var(--div-mid), var(--div-pos)); }
+.modal { position: fixed; inset: 0; background: rgba(0,0,0,.55); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 10; }
+.modal .box { background: var(--panel); border-radius: 12px; padding: 20px; max-width: 420px; width: 100%; }
+.modal h2 { margin: 0 0 10px; font-size: 18px; }
+.drill-cards { display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap; }
+.small { font-size: 12px; color: var(--muted); }
+.legend span { display: inline-block; padding: 1px 6px; margin-right: 6px; border-radius: 3px; color: var(--c-text); font-size: 12px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>21点训练器</h1>
+  <div class="tabs">
+    <button data-tab="play" class="on">牌桌</button>
+    <button data-tab="drill">策略练习</button>
+    <button data-tab="count">算牌练习</button>
+    <button data-tab="facts">趣味数据</button>
+    <button data-tab="settings">设置</button>
+  </div>
+  <a href="blackjack.html" class="small" style="margin-left:auto">English</a>
+</header>
+<main>
+
+<!-- ============ PLAY ============ -->
+<section id="tab-play">
+<div class="layout">
+  <div>
+    <div class="felt">
+      <div class="label">庄家 <span id="dealer-total"></span></div>
+      <div class="hand" id="dealer-hand"></div>
+      <div class="label">玩家</div>
+      <div id="player-hands"></div>
+      <div class="infobar">
+        <span id="rules-info"></span>
+        <span id="shoe-info"></span>
+        <span id="count-info"></span>
+        <span id="edge-info"></span>
+        <span id="bankroll-info"></span>
+      </div>
+    </div>
+
+    <div class="betrow" id="bet-row">
+      <label>下注 <input type="number" id="bet" min="1" step="1"></label>
+      <button data-chip="5">+5</button><button data-chip="25">+25</button><button data-chip="100">+100</button>
+      <button id="bet-min">最小注</button>
+      <span id="bet-hint" class="small"></span>
+      <button class="primary" id="deal">发牌</button>
+    </div>
+
+    <div class="actions" id="action-row">
+      <button data-act="H">要牌</button>
+      <button data-act="S">停牌</button>
+      <button data-act="D">加倍</button>
+      <button data-act="P">分牌</button>
+      <button data-act="R">投降</button>
+    </div>
+    <div class="actions hidden" id="insurance-row">
+      <span>买保险？</span>
+      <button data-ins="1">买</button>
+      <button data-ins="0">不买</button>
+    </div>
+    <div class="actions hidden" id="next-row">
+      <button class="primary" id="next-hand">下一手（同样注额）</button>
+      <button id="change-bet">更改注额</button>
+    </div>
+
+    <div class="msg" id="msg">设定注额后按“发牌”。</div>
+  </div>
+
+  <aside>
+    <div class="panel">
+      <h3>本局统计</h3>
+      <div class="stat"><span>手数</span><b id="st-hands">0</b></div>
+      <div class="stat"><span>赢 / 输 / 平</span><b id="st-wlp">0 / 0 / 0</b></div>
+      <div class="stat"><span>净胜</span><b id="st-net">0</b></div>
+      <div class="stat"><span>策略正确率</span><b id="st-strat">–</b></div>
+      <div class="stat"><span>算牌测验正确率</span><b id="st-quiz">–</b></div>
+      <div class="stat"><span>保险决策</span><b id="st-ins">–</b></div>
+      <div style="margin-top:8px"><button id="reset-stats">重置统计</button></div>
+    </div>
+    <div class="panel" id="ev-panel">
+      <h3>实时分析</h3>
+      <div id="ev-body" class="small">先发一手牌。每次决策后，这里会根据牌靴中剩余的牌，显示你当时每个选项的期望值。</div>
+    </div>
+    <div class="panel">
+      <h3>基本策略表 <button id="toggle-chart" style="padding:2px 8px;font-size:12px">显示</button></h3>
+      <div id="chart-wrap" class="chart-wrap hidden"></div>
+    </div>
+    <div class="panel">
+      <h3>期望值表 <button id="toggle-evchart" style="padding:2px 8px;font-size:12px">显示</button></h3>
+      <div id="evchart-wrap" class="chart-wrap hidden">
+        <label class="small" style="margin-bottom:6px">依据 <select id="ev-basis"><option value="fresh">新牌靴，精确值</option><option value="now">当前剩余牌，估计值</option></select></label>
+        <div id="evchart"></div>
+      </div>
+    </div>
+    <div class="panel">
+      <h3>指数偏离打法（Hi-Lo） <button id="toggle-index" style="padding:2px 8px;font-size:12px">显示</button></h3>
+      <div id="index-wrap" class="chart-wrap hidden"></div>
+    </div>
+  </aside>
+</div>
+</section>
+
+<!-- ============ STRATEGY DRILL ============ -->
+<section id="tab-drill" class="hidden">
+<div class="layout">
+  <div>
+    <div class="felt">
+      <div class="drill-cards">
+        <div><div class="label">庄家</div><div class="hand" id="drill-dealer"></div></div>
+        <div><div class="label">你</div><div class="hand" id="drill-player"></div></div>
+      </div>
+      <div class="infobar"><span id="drill-tc"></span></div>
+    </div>
+    <div class="actions" id="drill-actions">
+      <button data-act="H">要牌</button>
+      <button data-act="S">停牌</button>
+      <button data-act="D">加倍</button>
+      <button data-act="P">分牌</button>
+      <button data-act="R">投降</button>
+      <button class="primary" id="drill-next">下一题</button>
+    </div>
+    <div class="msg" id="drill-msg">按“下一题”开始。</div>
+    <p class="small">快捷键：H 要牌，S 停牌，D 加倍，P 分牌，R 投降，N / 回车 下一题。</p>
+  </div>
+  <aside>
+    <div class="panel">
+      <h3>练习选项</h3>
+      <div class="settings">
+        <div class="row">
+          <label><input type="checkbox" id="drill-hard" checked> 硬牌</label>
+          <label><input type="checkbox" id="drill-soft" checked> 软牌</label>
+          <label><input type="checkbox" id="drill-pair" checked> 对子</label>
+        </div>
+        <div class="row">
+          <label><input type="checkbox" id="drill-dev"> 包含算牌偏离打法（显示真数）</label>
+        </div>
+        <div class="row small" id="drill-adaptive-note"></div>
+      </div>
+    </div>
+    <div class="panel">
+      <h3>指数偏离打法（Hi-Lo） <button id="toggle-drill-index" style="padding:2px 8px;font-size:12px">隐藏</button></h3>
+      <div id="drill-index-wrap" class="chart-wrap"></div>
+    </div>
+    <div class="panel" id="drill-ev-panel">
+      <h3>各选项的期望值</h3>
+      <div id="drill-ev" class="small">作答后显示每个选项的期望值。</div>
+    </div>
+    <div class="panel">
+      <h3>练习统计</h3>
+      <div class="stat"><span>已作答</span><b id="dr-n">0</b></div>
+      <div class="stat"><span>重点练习的局面</span><b id="dr-focus">0</b></div>
+      <div class="stat"><span>正确</span><b id="dr-ok">0</b></div>
+      <div class="stat"><span>正确率</span><b id="dr-acc">–</b></div>
+      <div class="stat"><span>连对</span><b id="dr-streak">0</b></div>
+      <div style="margin-top:8px"><button id="dr-reset">重置</button></div>
+      <div id="dr-misses" class="small" style="margin-top:8px"></div>
+    </div>
+  </aside>
+</div>
+</section>
+
+<!-- ============ COUNT DRILL ============ -->
+<section id="tab-count" class="hidden">
+<div class="layout">
+  <div>
+    <div class="felt" style="display:flex;flex-direction:column;align-items:center;justify-content:center">
+      <div class="hand" id="count-cards" style="justify-content:center"></div>
+      <div id="count-progress" class="small" style="color:var(--felt-text)"></div>
+    </div>
+    <div class="actions">
+      <label>张数 <input type="number" id="cd-n" value="26" min="4" max="416"></label>
+      <label>毫秒/张 <input type="number" id="cd-ms" value="700" min="100" step="50"></label>
+      <label>每次张数 <select id="cd-group"><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></label>
+      <label>系统 <select id="cd-system"><option value="hilo">Hi-Lo</option><option value="acefive">Ace-Five</option></select></label>
+      <button class="primary" id="cd-start">开始</button>
+    </div>
+    <div class="actions hidden" id="cd-answer-row">
+      <label>流水数 <input type="number" id="cd-answer" step="1"></label>
+      <button class="primary" id="cd-submit">检查</button>
+    </div>
+    <div class="msg" id="cd-msg">牌会一组一组地闪现。按所选系统记流水数，结束后输入。</div>
+  </div>
+  <aside>
+    <div class="panel">
+      <h3>算牌练习统计</h3>
+      <div class="stat"><span>轮数</span><b id="cd-rounds">0</b></div>
+      <div class="stat"><span>正确</span><b id="cd-ok">0</b></div>
+      <div class="stat"><span>最快速度（毫秒/张，答对时）</span><b id="cd-best">–</b></div>
+      <div style="margin-top:8px"><button id="cd-reset">重置</button></div>
+    </div>
+    <div class="panel">
+      <h3>Hi-Lo 计数值</h3>
+      <div class="stat"><span>2, 3, 4, 5, 6</span><b>+1</b></div>
+      <div class="stat"><span>7, 8, 9</span><b>0</b></div>
+      <div class="stat"><span>10, J, Q, K, A</span><b>−1</b></div>
+      <p class="small">真数 = 流水数 ÷ 剩余副数（取到最近的半副）。</p>
+    </div>
+    <div class="panel">
+      <h3>Ace-Five 计数值</h3>
+      <div class="stat"><span>5</span><b>+1</b></div>
+      <div class="stat"><span>A</span><b>−1</b></div>
+      <div class="stat"><span>其他所有牌</span><b>0</b></div>
+      <p class="small">只用于下注，不算真数：计数达到 +2 或以上时把上一注加倍（不超过上限）；+1 或以下时下最小注。无论如何都按基本策略打牌。</p>
+    </div>
+  </aside>
+</div>
+</section>
+
+<!-- ============ FUN FACTS ============ -->
+<section id="tab-facts" class="hidden">
+  <div class="panel">
+    <h3>算牌值多少？</h3>
+    <p class="small" id="facts-sim-note"></p>
+    <div class="chart-wrap" id="facts-sim"></div>
+    <p class="small">“下注金额优势”是玩家每轮平均盈利除以下注金额：+1% 表示平均每下注 1 元赢 1 分。这是各行之间可直接比较的数字。“每轮胜率”以最小注为单位，因此也反映了下注的多少。“不玩”指计数或优势为负时完全不下注，真实牌桌未必允许。注额阶梯：Hi-Lo 在真数 +2 以下下 1 单位，在 +2、+3、+4、+5 时分别下 2、4、8、16 单位；Ace-Five 在计数 +2 或以上时把上一注加倍，低于时回到 1 单位；完美记牌者从优势为零时的 1 单位线性增加到优势 +1.5% 时的最大注。资金无限，无桌面上限，与庄家单挑。</p>
+  </div>
+  <div class="panel">
+    <h3>如果你能看到不该看的牌？</h3>
+    <p class="small">规则和引擎相同，每行 100 万轮，除非注明均为固定注额，四人桌上的其他座位按基本策略打牌。这位玩家能看到牌靴中的下一张牌、庄家的暗牌，或两者都能看到，并据此按期望值打每一手。“偏离基本策略”是推翻策略表答案的决策所占比例。这两种“超能力”都对应赌场会起诉的真实作弊手段；这里只是思想实验。</p>
+    <div class="chart-wrap" id="facts-sp"></div>
+    <p class="small">座位为什么重要：坐末位或单挑时，你不要的那张牌会发给庄家，所以停牌可以把爆牌送给庄家；坐中间时它会发给下一位玩家。暗牌信息与座位无关，因为庄家的牌在任何人行动前就已固定。单挑时，牌靴的下一张牌就是你自己的第一张牌，所以下注前就已知道；最后一行在它是 A 或 10 时下 8 单位。</p>
+    <h3 style="margin-top:14px">……并且尽量不被发现？</h3>
+    <p class="small">上面的打法一靴牌之内就会被发现：没人会在 19 点要牌。这里同一位玩家单挑、固定注额，只偏离到看起来正常的打法：即在没有超能力时其期望值与基本策略最佳相差不超过 δ 的打法。δ = 0.02 时只能在 16 对 10、12 对 4 这类几乎五五开的局面中选择；δ = 0.20 时允许任何松散玩家可能做的事，比如任何硬 12–16 都要牌。保险按普通的计数规则。</p>
+    <div class="chart-wrap" id="facts-spd"></div>
+  </div>
+  <div class="layout">
+    <div>
+      <div class="panel">
+        <h3>按 Hi-Lo 真数的优势</h3>
+        <div class="chart-wrap" id="facts-tc"></div>
+        <p class="small">按当前规则，在每个真数的代表性牌靴组成下，采用最优打法和保险。真数每 +1 约值半个百分点，这正是注额阶梯才是赚钱关键的原因。 <span id="facts-tc-exact"></span></p>
+      </div>
+      <div class="panel">
+        <h3>按 Ace-Five 计数的优势</h3>
+        <div class="chart-wrap" id="facts-af"></div>
+        <p class="small" id="facts-af-note"></p>
+      </div>
+      <div class="panel">
+        <h3>哪些牌是你的朋友？</h3>
+        <div class="chart-wrap" id="facts-eor"></div>
+        <p class="small">移牌效应：取一副全新的 6 副牌靴（S17、分牌后可加倍、晚投降），移走某一点数的一张牌，重新精确计算基本策略的优势。移走后对你不利的牌，正是你希望留在牌靴里的牌，所以表格上方的牌站在你这边，下方的牌为赌场效力。小牌帮庄家，因为庄家在硬 12 到 16 上必须要牌且永远不能加倍；一张 5 能把任何硬 12–16 变成成手而不爆。大牌会让这些硬牌爆掉，给你的加倍兑现，并凑出 3:2 的黑杰克。注意 7 是庄家的牌、9 是玩家的牌，Hi-Lo 都把它们算作 0；而 Ace-Five 只保留了两个极端。</p>
+      </div>
+      <div class="panel">
+        <h3>按明牌分的庄家最终点数</h3>
+        <div class="chart-wrap" id="facts-dealer"></div>
+        <p class="small">新牌靴，当前规则。明牌为 A 或 10 时，庄家已经检查过暗牌且没有黑杰克。这就是为什么硬 12–16 对 2 到 6 停牌、对 7 到 A 要牌。</p>
+      </div>
+    </div>
+    <aside>
+      <div class="panel">
+        <h3>最佳打法的期望值（新牌靴）</h3>
+        <div class="chart-wrap" id="facts-evchart"></div>
+        <p class="small">按当前规则，每种两张牌起手牌的最佳打法每单位注的期望值。红色对庄家有利，绿色对你有利。鼠标悬停在格子上可查看每个选项的期望值。</p>
+      </div>
+      <div class="panel">
+        <h3>策略表中最接近的抉择</h3>
+        <div id="facts-close" class="small"></div>
+        <p class="small">在当前副数的新牌靴下，最佳与次佳选项期望值最接近的起手牌。这些是计数最先会翻转的格子，也最值得练习。</p>
+      </div>
+      <div class="panel">
+        <h3>零碎小知识</h3>
+        <div id="facts-misc" class="small"></div>
+      </div>
+    </aside>
+  </div>
+</section>
+
+<!-- ============ SETTINGS ============ -->
+<section id="tab-settings" class="hidden">
+  <div class="panel settings">
+    <h3>牌桌规则</h3>
+    <div class="row">
+      <label>副数 <select id="s-decks"><option>1</option><option>2</option><option>4</option><option>6</option><option>8</option><option value="0">∞ 无限牌靴</option></select></label>
+      <label>庄家 <select id="s-h17"><option value="0">软 17 停牌</option><option value="1">软 17 要牌</option></select></label>
+      <label>黑杰克赔率 <select id="s-bj"><option value="1.5">3 : 2</option><option value="1.2">6 : 5</option></select></label>
+    </div>
+    <div class="row">
+      <label><input type="checkbox" id="s-das"> 分牌后可加倍</label>
+      <label><input type="checkbox" id="s-sur"> 允许投降（晚投降，仅限前两张牌）</label>
+      <label><input type="checkbox" id="s-rsa"> A 可再次分牌</label>
+    </div>
+    <div class="row">
+      <label>切牌深度 <input type="number" id="s-pen" min="0.3" max="0.95" step="0.05"> （洗牌前发出的牌靴比例）</label>
+    </div>
+  </div>
+  <div class="panel settings">
+    <h3>训练</h3>
+    <div class="row">
+      <label>算牌系统 <select id="s-system"><option value="hilo">Hi-Lo</option><option value="acefive">Ace-Five</option><option value="both">两者</option></select></label>
+      <label><input type="checkbox" id="s-showcount"> 玩牌时显示计数</label>
+      <label><input type="checkbox" id="s-hint"> 显示按计数建议的注额</label>
+    </div>
+    <div class="row">
+      <label>每 <input type="number" id="s-quiz" min="0" step="1"> 手考一次计数（0 = 从不）</label>
+    </div>
+    <div class="row">
+      <label><input type="checkbox" id="s-dev"> 用 Illustrious 18 + Fab 4 指数打法评判（仅 Hi-Lo）</label>
+    </div>
+    <div class="row">
+      <label>期望值分析 <select id="s-ev"><option value="after">每次决策后</option><option value="before">决策前（会泄露答案）</option><option value="off">关闭</option></select></label>
+      <label><input type="checkbox" id="s-edge"> 显示下一手的优势</label>
+    </div>
+    <div class="row">
+      <label><input type="checkbox" id="s-adaptive"> 自适应练习：反复出现我答错的局面直到答对，并偏重策略表边界的格子</label>
+    </div>
+  </div>
+  <div class="panel settings">
+    <h3>资金</h3>
+    <div class="row">
+      <label>最小注 <input type="number" id="s-min" min="1" step="1"></label>
+      <label>资金 <input type="number" id="s-bank" min="1" step="1"></label>
+      <button id="s-bank-reset">重置资金</button>
+    </div>
+  </div>
+  <div class="panel">
+    <button class="primary" id="s-apply">应用（重新洗牌）</button>
+    <span class="small" style="margin-left:10px">4 副及以上时，评判和策略表采用公开发表的多副牌基本策略；1 副、2 副和无限副时采用该副数新牌靴下的精确最佳打法。无限牌靴每张牌都有放回抽取，因此算牌功能关闭。</span>
+  </div>
+</section>
+</main>
+
+<div class="modal hidden" id="quiz">
+  <div class="box">
+    <h2>计数检查</h2>
+    <p class="small" id="quiz-info"></p>
+    <div class="settings">
+      <div class="row" id="quiz-hilo-row"><label>Hi-Lo 流水数 <input type="number" id="quiz-rc" step="1"></label></div>
+      <div class="row" id="quiz-tc-row"><label>Hi-Lo 真数 <input type="number" id="quiz-tc" step="0.5"></label> <span class="small">（选填）</span></div>
+      <div class="row" id="quiz-af-row"><label>Ace-Five 计数 <input type="number" id="quiz-af" step="1"></label></div>
+    </div>
+    <div id="quiz-result" class="msg hidden" style="margin:10px 0"></div>
+    <div class="actions">
+      <button class="primary" id="quiz-submit">检查</button>
+      <button class="hidden" id="quiz-continue">继续</button>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+// ---------------------------------------------------------------- cards
+const SUITS = ['♠', '♥', '♦', '♣'];
+const RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+
+function cardValue(c) {
+  if (c.rank === 'A') return 11;
+  if (c.rank === 'J' || c.rank === 'Q' || c.rank === 'K') return 10;
+  return +c.rank;
+}
+function hiLo(c) { const v = cardValue(c); return v <= 6 ? 1 : v <= 9 ? 0 : -1; }
+function aceFive(c) { return c.rank === '5' ? 1 : c.rank === 'A' ? -1 : 0; }
+
+// Total with aces as 11 where that does not bust; soft = an ace is still counted as 11.
+function handTotal(cards) {
+  let total = 0, aces = 0;
+  for (const c of cards) { total += cardValue(c); if (c.rank === 'A') aces++; }
+  while (total > 21 && aces) { total -= 10; aces--; }
+  return { total, soft: aces > 0 };
+}
+function isPair(cards) { return cards.length === 2 && cardValue(cards[0]) === cardValue(cards[1]); }
+function describe(cards) {
+  const { total, soft } = handTotal(cards);
+  if (isPair(cards)) return `一对${cards[0].rank === 'A' ? 'A' : cardValue(cards[0])}`;
+  return (soft ? '软' : '硬') + total;
+}
+function fmtTc(tc) { return (tc >= 0 ? '+' : '') + tc.toFixed(1); }
+
+// ---------------------------------------------------------------- basic strategy
+// Multi-deck basic strategy. opts says what the rules allow for this hand right now.
+// Returns 'H','S','D','P','R'. A 'D' or 'R' is only returned when it is allowed.
+function basicStrategy(cards, up, S, opts) {
+  const { total, soft } = handTotal(cards);
+  const u = cardValue(up);
+  const between = (a, b) => u >= a && u <= b;
+
+  if (isPair(cards) && opts.canSplit) {
+    const r = cardValue(cards[0]);
+    let split = false;
+    if (r === 11) split = true;
+    else if (r === 8) { if (S.h17 && opts.canSurrender && u === 11) return 'R'; split = true; }
+    else if (r === 9) split = between(2, 6) || between(8, 9);
+    else if (r === 7) split = between(2, 7);
+    else if (r === 6) split = S.das ? between(2, 6) : between(3, 6);
+    else if (r === 4) split = S.das && between(5, 6);
+    else if (r === 2 || r === 3) split = S.das ? between(2, 7) : between(4, 7);
+    if (split) return 'P';
+  }
+  if (opts.canSurrender && !soft) {
+    if (total === 16 && u >= 9) return 'R';
+    if (total === 15 && u === 10) return 'R';
+    if (S.h17 && total === 15 && u === 11) return 'R';
+    if (S.h17 && total === 17 && u === 11) return 'R';
+  }
+  const dbl = fallback => (opts.canDouble ? 'D' : fallback);
+  if (soft) {
+    switch (total) {
+      case 12: return 'H';
+      case 13: case 14: return between(5, 6) ? dbl('H') : 'H';
+      case 15: case 16: return between(4, 6) ? dbl('H') : 'H';
+      case 17: return between(3, 6) ? dbl('H') : 'H';
+      case 18: if (between(S.h17 ? 2 : 3, 6)) return dbl('S'); return u <= 8 ? 'S' : 'H';
+      case 19: return (S.h17 && u === 6) ? dbl('S') : 'S';
+      default: return 'S';
+    }
+  }
+  if (total <= 8) return 'H';
+  if (total === 9) return between(3, 6) ? dbl('H') : 'H';
+  if (total === 10) return between(2, 9) ? dbl('H') : 'H';
+  if (total === 11) return (u <= 10 || S.h17) ? dbl('H') : 'H';
+  if (total === 12) return between(4, 6) ? 'S' : 'H';
+  if (total <= 16) return between(2, 6) ? 'S' : 'H';
+  return 'S';
+}
+
+// Illustrious 18 + Fab 4 (Hi-Lo). Returns an action when an index applies, else null.
+// Where late surrender is available the basic surrender decision is kept, as the
+// published indices assume surrender is unavailable for those cells.
+function deviation(cards, up, tc, S, opts) {
+  const { total, soft } = handTotal(cards);
+  const u = cardValue(up);
+  if (soft) return null;
+  const at = i => tc >= i;
+  if (opts.canSurrender) {
+    if (total === 14 && u === 10 && at(3)) return 'R';
+    if (total === 15 && u === 10) return at(0) ? 'R' : 'H';
+    if (total === 15 && u === 9 && at(2)) return 'R';
+    if (total === 15 && u === 11 && at(1)) return 'R';
+    if (total === 16 && u >= 9) return 'R';
+  }
+  if (isPair(cards) && cardValue(cards[0]) === 10 && opts.canSplit) {
+    if (u === 5 && at(5)) return 'P';
+    if (u === 6 && at(4)) return 'P';
+  }
+  if (total === 16 && u === 10) return at(0) ? 'S' : 'H';
+  if (total === 16 && u === 9) return at(5) ? 'S' : 'H';
+  if (total === 15 && u === 10) return at(4) ? 'S' : 'H';
+  if (total === 13 && u === 2) return at(-1) ? 'S' : 'H';
+  if (total === 13 && u === 3) return at(-2) ? 'S' : 'H';
+  if (total === 12 && u === 2) return at(3) ? 'S' : 'H';
+  if (total === 12 && u === 3) return at(2) ? 'S' : 'H';
+  if (total === 12 && u === 4) return at(0) ? 'S' : 'H';
+  if (total === 12 && u === 5) return at(-2) ? 'S' : 'H';
+  if (total === 12 && u === 6) return at(-1) ? 'S' : 'H';
+  if (opts.canDouble) {
+    if (total === 11 && u === 11 && !S.h17) return at(1) ? 'D' : 'H';
+    if (total === 10 && u === 10) return at(4) ? 'D' : 'H';
+    if (total === 10 && u === 11) return at(4) ? 'D' : 'H';
+    if (total === 9 && u === 2) return at(1) ? 'D' : 'H';
+    if (total === 9 && u === 7) return at(3) ? 'D' : 'H';
+  }
+  return null;
+}
+
+const ACTION_NAME = { H: '要牌', S: '停牌', D: '加倍', P: '分牌', R: '投降' };
+
+// The Hi-Lo index plays graded by deviation(), as a table: play `above` at or above the true-count
+// index, `below` under it. `sur` replaces the row when late surrender is allowed; `h17` when the
+// dealer hits soft 17; `needsSur` rows exist only with surrender.
+const INDEX_PLAYS = [
+  { kind: 'ins', up: 11, index: 3, above: '买', below: '不买', group: '保险' },
+  { kind: 'hard', total: 16, up: 10, index: 0, above: 'S', below: 'H', sur: '改为投降' },
+  { kind: 'hard', total: 15, up: 10, index: 4, above: 'S', below: 'H', sur: '见 Fab 4' },
+  { kind: 'pair', total: 10, up: 5, index: 5, above: 'P', below: 'S' },
+  { kind: 'pair', total: 10, up: 6, index: 4, above: 'P', below: 'S' },
+  { kind: 'hard', total: 10, up: 10, index: 4, above: 'D', below: 'H' },
+  { kind: 'hard', total: 12, up: 3, index: 2, above: 'S', below: 'H' },
+  { kind: 'hard', total: 12, up: 2, index: 3, above: 'S', below: 'H' },
+  { kind: 'hard', total: 11, up: 11, index: 1, above: 'D', below: 'H', h17: 'H17：总是加倍' },
+  { kind: 'hard', total: 9, up: 2, index: 1, above: 'D', below: 'H' },
+  { kind: 'hard', total: 10, up: 11, index: 4, above: 'D', below: 'H' },
+  { kind: 'hard', total: 9, up: 7, index: 3, above: 'D', below: 'H' },
+  { kind: 'hard', total: 16, up: 9, index: 5, above: 'S', below: 'H', sur: '改为投降' },
+  { kind: 'hard', total: 13, up: 2, index: -1, above: 'S', below: 'H' },
+  { kind: 'hard', total: 12, up: 4, index: 0, above: 'S', below: 'H' },
+  { kind: 'hard', total: 12, up: 5, index: -2, above: 'S', below: 'H' },
+  { kind: 'hard', total: 12, up: 6, index: -1, above: 'S', below: 'H' },
+  { kind: 'hard', total: 13, up: 3, index: -2, above: 'S', below: 'H' },
+  { kind: 'hard', total: 14, up: 10, index: 3, above: 'R', below: 'H', needsSur: true, group: 'Fab 4' },
+  { kind: 'hard', total: 15, up: 10, index: 0, above: 'R', below: 'H', needsSur: true, group: 'Fab 4' },
+  { kind: 'hard', total: 15, up: 9, index: 2, above: 'R', below: 'H', needsSur: true, group: 'Fab 4' },
+  { kind: 'hard', total: 15, up: 11, index: 1, above: 'R', below: 'H', needsSur: true, group: 'Fab 4' },
+];
+function indexRowKey(r) { return `${r.kind}:${r.total || 0}:${r.up}`; }
+function indexRowNote(r) { return (r.sur && S.surrender) ? r.sur : (r.h17 && S.h17) ? r.h17 : ''; }
+function indexRowActive(r) { return !(r.needsSur && !S.surrender); }
+// Key of the index row a hand would fall under, or null. Soft hands have no Hi-Lo indices.
+function indexKeyForHand(cards, up) {
+  const { total, soft } = handTotal(cards);
+  if (soft) return null;
+  if (isPair(cards) && cardValue(cards[0]) === 10) return `pair:10:${cardValue(up)}`;
+  return `hard:${total}:${cardValue(up)}`;
+}
+
+// ---------------------------------------------------------------- EV analysis
+// Expected values computed from a rank distribution p[1..10] (ace = 1, all tens = 10),
+// treating every draw as independent with those probabilities. That is exact for an
+// infinite shoe and, for a 6-deck shoe, within a few hundredths of a percent of the
+// without-replacement answer. Values are in units of the initial bet.
+function makeAnalyzer(p, S) {
+  const next = (total, soft, c) => {
+    if (c === 1 && total + 11 <= 21) return [total + 11, true];
+    let t = total + c, s = soft;
+    if (t > 21 && s) { t -= 10; s = false; }
+    return [t, s];
+  };
+  const dealerMemo = new Map();
+  function dealerFrom(total, soft) {   // -> [P17, P18, P19, P20, P21, Pbust]
+    if (total > 21) return [0, 0, 0, 0, 0, 1];
+    if (total > 17 || (total === 17 && !(soft && S.h17))) { const d = [0, 0, 0, 0, 0, 0]; d[total - 17] = 1; return d; }
+    const key = total * 2 + (soft ? 1 : 0);
+    if (dealerMemo.has(key)) return dealerMemo.get(key);
+    const d = [0, 0, 0, 0, 0, 0];
+    for (let c = 1; c <= 10; c++) {
+      if (!p[c]) continue;
+      const [t, s] = next(total, soft, c), sub = dealerFrom(t, s);
+      for (let i = 0; i < 6; i++) d[i] += p[c] * sub[i];
+    }
+    dealerMemo.set(key, d);
+    return d;
+  }
+  const distMemo = new Map();
+  function dealerDist(up) {   // final totals given the up card and a peek showing no blackjack
+    if (distMemo.has(up)) return distMemo.get(up);
+    const [t0, s0] = next(0, false, up);
+    const excl = up === 1 ? 10 : up === 10 ? 1 : 0;
+    const norm = 1 - (excl ? p[excl] : 0);
+    const d = [0, 0, 0, 0, 0, 0];
+    for (let c = 1; c <= 10; c++) {
+      if (c === excl || !p[c]) continue;
+      const [t, s] = next(t0, s0, c), sub = dealerFrom(t, s);
+      for (let i = 0; i < 6; i++) d[i] += p[c] / norm * sub[i];
+    }
+    distMemo.set(up, d);
+    return d;
+  }
+  function standEV(total, dd) {
+    if (total > 21) return -1;
+    let ev = dd[5];
+    for (let i = 0; i < 5; i++) { const d = 17 + i; ev += dd[i] * (total > d ? 1 : total < d ? -1 : 0); }
+    return ev;
+  }
+  const hsMemo = new Map();
+  function hitOrStand(total, soft, up) {   // best EV once only hit and stand remain
+    const key = up * 100 + total * 2 + (soft ? 1 : 0);
+    if (hsMemo.has(key)) return hsMemo.get(key);
+    const dd = dealerDist(up);
+    let best = standEV(total, dd);
+    if (total < 21) {
+      let hit = 0;
+      for (let c = 1; c <= 10; c++) { if (!p[c]) continue; const [t, s] = next(total, soft, c); hit += p[c] * (t > 21 ? -1 : hitOrStand(t, s, up)); }
+      best = Math.max(best, hit);
+    }
+    hsMemo.set(key, best);
+    return best;
+  }
+  // EV of each available action for a hand. pairVal is the rank value if the hand is a
+  // splittable pair (ace = 1), else 0. Re-splits are not modelled.
+  function actions(total, soft, pairVal, up, opts) {
+    const dd = dealerDist(up);
+    const out = { S: standEV(total, dd) };
+    if (opts.canHit !== false) {
+      let hit = 0;
+      for (let c = 1; c <= 10; c++) { if (!p[c]) continue; const [t, s] = next(total, soft, c); hit += p[c] * (t > 21 ? -1 : hitOrStand(t, s, up)); }
+      out.H = hit;
+    }
+    if (opts.canDouble) {
+      let d = 0;
+      for (let c = 1; c <= 10; c++) { if (!p[c]) continue; const [t] = next(total, soft, c); d += p[c] * 2 * standEV(t, dd); }
+      out.D = d;
+    }
+    if (opts.canSplit && pairVal) {
+      let one = 0;
+      const [t1, s1] = next(0, false, pairVal);
+      for (let c = 1; c <= 10; c++) {
+        if (!p[c]) continue;
+        const [t2, s2] = next(t1, s1, c);
+        let ev;
+        if (pairVal === 1) ev = standEV(t2, dd);   // split aces receive one card each
+        else {
+          ev = hitOrStand(t2, s2, up);
+          if (S.das) {
+            let d = 0;
+            for (let k = 1; k <= 10; k++) { if (!p[k]) continue; const [t3] = next(t2, s2, k); d += p[k] * 2 * standEV(t3, dd); }
+            ev = Math.max(ev, d);
+          }
+        }
+        one += p[c] * ev;
+      }
+      out.P = 2 * one;
+    }
+    if (opts.canSurrender) out.R = -0.5;
+    return out;
+  }
+  // Player's expectation for the next round with optimal play and insurance, per unit bet.
+  function roundEV() {
+    let ev = 0;
+    for (let u = 1; u <= 10; u++) {
+      if (!p[u]) continue;
+      const pDealerBJ = u === 1 ? p[10] : u === 10 ? p[1] : 0;
+      for (let a = 1; a <= 10; a++) for (let b = 1; b <= 10; b++) {
+        const pr = p[u] * p[a] * p[b];
+        if (!pr) continue;
+        let e;
+        if ((a === 1 && b === 10) || (a === 10 && b === 1)) e = (1 - pDealerBJ) * S.bjPays;
+        else {
+          const [t1, s1] = next(0, false, a), [t2, s2] = next(t1, s1, b);
+          const acts = actions(t2, s2, a === b ? a : 0, u, { canDouble: true, canSplit: a === b, canSurrender: S.surrender });
+          e = -pDealerBJ + (1 - pDealerBJ) * Math.max(...Object.values(acts));
+        }
+        ev += pr * e;
+      }
+      if (u === 1) ev += p[1] * Math.max(0, 0.5 * (3 * p[10] - 1));   // insurance when it is +EV
+    }
+    return ev;
+  }
+  return { actions, roundEV, dealerDist };
+}
+// Exact expected values for one hand, drawing without replacement from `counts0`, the number of
+// unseen cards of each rank (index 1 = ace, 10 = any ten). Stand, hit, double and surrender are
+// exact; the dealer's hole card is conditioned on the peek showing no blackjack. Hard 17 and
+// above never hits. Memoised on the multiset of cards drawn so far, so order does not matter.
+function makeExactAnalyzer(S) {
+  let counts = [], total = 0;
+  const nextT = (t, soft, c) => {
+    if (c === 1 && t + 11 <= 21) return [t + 11, true];
+    let x = t + c, s = soft;
+    if (x > 21 && s) { x -= 10; s = false; }
+    return [x, s];
+  };
+  const key = () => counts.join(',');
+  const dealerMemo = new Map();
+  function dealerDist(up) {   // the up card is already out of `counts`
+    const [t0, s0] = nextT(0, false, up);
+    const excl = up === 1 ? 10 : up === 10 ? 1 : 0;
+    function from(t, soft, first) {
+      if (t > 21) return [0, 0, 0, 0, 0, 1];
+      if (t > 17 || (t === 17 && !(soft && S.h17))) { const d = [0, 0, 0, 0, 0, 0]; d[t - 17] = 1; return d; }
+      const k = up + '|' + t + '|' + (soft ? 1 : 0) + '|' + (first ? 1 : 0) + '|' + key();
+      const hit = dealerMemo.get(k);
+      if (hit) return hit;
+      const d = [0, 0, 0, 0, 0, 0];
+      const n = total - (first && excl ? counts[excl] : 0);
+      for (let r = 1; r <= 10; r++) {
+        if (!counts[r] || (first && r === excl)) continue;
+        const pr = counts[r] / n;
+        counts[r]--; total--;
+        const [t2, s2] = nextT(t, soft, r), sub = from(t2, s2, false);
+        counts[r]++; total++;
+        for (let i = 0; i < 6; i++) d[i] += pr * sub[i];
+      }
+      dealerMemo.set(k, d);
+      return d;
+    }
+    return from(t0, s0, true);
+  }
+  function standEV(t, dd) {
+    if (t > 21) return -1;
+    let ev = dd[5];
+    for (let i = 0; i < 5; i++) { const d = 17 + i; ev += dd[i] * (t > d ? 1 : t < d ? -1 : 0); }
+    return ev;
+  }
+  const playerMemo = new Map();
+  function best(t, soft, up) {   // max of stand and hit, with hard 17+ standing
+    const stand = standEV(t, dealerDist(up));
+    if (t >= 21 || (!soft && t >= 17)) return stand;
+    const k = up + '|' + t + '|' + (soft ? 1 : 0) + '|' + key();
+    const m = playerMemo.get(k);
+    if (m !== undefined) return m;
+    const v = Math.max(stand, hitEV(t, soft, up));
+    playerMemo.set(k, v);
+    return v;
+  }
+  function hitEV(t, soft, up) {
+    let ev = 0;
+    for (let r = 1; r <= 10; r++) {
+      if (!counts[r]) continue;
+      const pr = counts[r] / total;
+      counts[r]--; total--;
+      const [t2, s2] = nextT(t, soft, r);
+      ev += pr * (t2 > 21 ? -1 : best(t2, s2, up));
+      counts[r]++; total++;
+    }
+    return ev;
+  }
+  function actions(counts0, t, soft, up, opts) {
+    counts = counts0.slice(); total = 0;
+    for (let v = 1; v <= 10; v++) total += counts[v];
+    const out = { S: standEV(t, dealerDist(up)) };
+    if (opts.canHit !== false) out.H = hitEV(t, soft, up);
+    if (opts.canDouble) {
+      let d = 0;
+      for (let r = 1; r <= 10; r++) {
+        if (!counts[r]) continue;
+        const pr = counts[r] / total;
+        counts[r]--; total--;
+        const [t2] = nextT(t, soft, r);
+        d += pr * 2 * standEV(t2, dealerDist(up));
+        counts[r]++; total++;
+      }
+      out.D = d;
+    }
+    if (opts.canSurrender) out.R = -0.5;
+    return out;
+  }
+  return { actions };
+}
+function bestAction(evs) { return Object.keys(evs).reduce((b, k) => (evs[k] > evs[b] ? k : b)); }
+function fmtEv(x) { return (x >= 0 ? '+' : '−') + Math.abs(x).toFixed(3); }
+function fmtPct(x) { return (x >= 0 ? '+' : '−') + Math.abs(100 * x).toFixed(2) + '%'; }
+
+// ---------------------------------------------------------------- persistence
+const DEFAULTS = {
+  decks: 6, h17: false, das: true, surrender: true, resplitAces: false, bjPays: 1.5,
+  penetration: 0.75, showCount: false, hints: false, quizEvery: 5, deviations: false,
+  system: 'hilo', evMode: 'after', showEdge: true, adaptive: true,
+  minBet: 10, bankroll: 1000,
+};
+const countingOn = () => S.decks !== 0;
+const hasHiLo = () => countingOn() && S.system !== 'acefive';
+const hasAceFive = () => countingOn() && S.system !== 'hilo';
+function load(key, fallback) {
+  try { const v = localStorage.getItem(key); return v ? Object.assign({}, fallback, JSON.parse(v)) : Object.assign({}, fallback); }
+  catch (e) { return Object.assign({}, fallback); }
+}
+function save(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) { /* storage unavailable */ } }
+
+let S = load('bj.settings', DEFAULTS);
+const STATS0 = { hands: 0, won: 0, lost: 0, push: 0, net: 0, decisions: 0, correct: 0, quizzes: 0, quizCorrect: 0, ins: 0, insCorrect: 0 };
+let stats = load('bj.stats', STATS0);
+let bankroll = load('bj.bank', { bankroll: S.bankroll }).bankroll;
+
+// ---------------------------------------------------------------- shoe
+let shoe = [], runningCount = 0, aceFiveCount = 0, cutIndex = 0, needShuffle = true;
+function shuffle() {
+  shoe = [];
+  if (S.decks === 0) { cutIndex = -1; runningCount = 0; aceFiveCount = 0; needShuffle = false; return; }   // infinite: nothing to shuffle
+  for (let d = 0; d < S.decks; d++) for (const s of SUITS) for (const r of RANKS) shoe.push({ rank: r, suit: s });
+  for (let i = shoe.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [shoe[i], shoe[j]] = [shoe[j], shoe[i]]; }
+  cutIndex = Math.floor(shoe.length * (1 - S.penetration));
+  runningCount = 0; aceFiveCount = 0; needShuffle = false;
+}
+function seeCard(c) { runningCount += hiLo(c); aceFiveCount += aceFive(c); }
+function draw(visible) {
+  if (S.decks === 0) { const c = { rank: RANKS[Math.floor(Math.random() * 13)], suit: SUITS[Math.floor(Math.random() * 4)] }; if (visible) seeCard(c); return c; }
+  if (!shoe.length) { shuffle(); midShuffle = true; }  // ran out of cards mid-hand
+  const c = shoe.pop();
+  if (visible) seeCard(c);
+  return c;
+}
+const UNIFORM_P = (() => { const p = [0]; for (let v = 1; v <= 10; v++) p[v] = (v === 10 ? 4 : 1) / 13; return p; })();
+// Rank counts of the unseen cards (shoe plus the hidden hole card), ace = 1, tens = 10; null for an infinite shoe.
+function unseenCounts() {
+  if (S.decks === 0) return null;
+  const cnt = new Array(11).fill(0);
+  const add = c => { const v = cardValue(c); cnt[v === 11 ? 1 : v]++; };
+  if (needShuffle) for (let v = 1; v <= 10; v++) cnt[v] = (v === 10 ? 16 : 4) * S.decks;   // fresh shoe
+  else { shoe.forEach(add); if (holeHidden && dealer.length > 1) add(dealer[1]); }
+  return cnt;
+}
+// A fresh shoe of the current size with the given visible cards removed; null for an infinite shoe.
+function freshCounts(visible) {
+  if (S.decks === 0) return null;
+  const cnt = new Array(11).fill(0);
+  for (let v = 1; v <= 10; v++) cnt[v] = (v === 10 ? 16 : 4) * S.decks;
+  for (const c of visible) { const v = cardValue(c); const i = v === 11 ? 1 : v; if (cnt[i] > 0) cnt[i]--; }
+  return cnt;
+}
+function probsOf(counts) { const n = counts.reduce((a, b) => a + b, 0); return n ? counts.map(x => x / n) : UNIFORM_P; }
+let exactA = null, infA = null;
+function exactAnalyzer() { if (!exactA || exactA.S !== S) exactA = { S, a: makeExactAnalyzer(S) }; return exactA.a; }
+function infiniteAnalyzer() { if (!infA || infA.S !== S) infA = { S, a: makeAnalyzer(UNIFORM_P, S) }; return infA.a; }
+// EV of every available action for a hand, per unit of the initial bet. With `counts` the stand,
+// hit, double and surrender values are exact (drawn without replacement); without it the shoe is
+// infinite and the with-replacement analyzer is exact. Split is always the with-replacement
+// estimate without re-splits, reported in `approx`. `p` overrides the infinite-shoe distribution.
+function evaluateHand(cards, up, opts, counts, p) {
+  const { total, soft } = handTotal(cards);
+  const v0 = cardValue(cards[0]), u = cardValue(up), uv = u === 11 ? 1 : u;
+  const pairVal = isPair(cards) && opts.canSplit ? (v0 === 11 ? 1 : v0) : 0;
+  const o = Object.assign({}, opts, { canSplit: !!pairVal });
+  let evs;
+  if (!counts) evs = (p ? makeAnalyzer(p, S) : infiniteAnalyzer()).actions(total, soft, pairVal, uv, o);
+  else {
+    evs = exactAnalyzer().actions(counts, total, soft, uv, o);
+    if (pairVal) evs.P = makeAnalyzer(probsOf(counts), S).actions(total, soft, pairVal, uv, o).P;
+  }
+  return { evs, approx: pairVal ? ['P'] : [] };
+}
+function analyzeHand(h) { return evaluateHand(h.cards, dealer[0], handOptions(h), unseenCounts()); }
+// Basic strategy for grading and the chart: the published multi-deck chart for 4+ decks, otherwise
+// the exact best action at a fresh shoe of the current size with the visible cards removed.
+function basicChoices(cards, up, opts) {   // best first; every action within 0.0005 of it counts as correct
+  if (S.decks >= 4) return [basicStrategy(cards, up, S, opts)];
+  const { evs } = evaluateHand(cards, up, opts, freshCounts(cards.concat([up])));
+  const best = bestAction(evs);
+  return Object.keys(evs).filter(k => evs[k] >= evs[best] - 0.0005).sort((a, b) => evs[b] - evs[a]);
+}
+function basicAction(cards, up, opts) { return basicChoices(cards, up, opts)[0]; }
+// Player's expectation for the next round. Exact for an infinite shoe; otherwise the
+// with-replacement estimate at the current composition.
+function currentEdge() {
+  if (S.decks === 0) return infiniteAnalyzer().roundEV();
+  return makeAnalyzer(probsOf(unseenCounts()), S).roundEV();
+}
+// How a chosen action compares with the best one, as a sentence fragment for the feedback line.
+function evVerdict(evs, a) {
+  const best = bestAction(evs), cost = evs[best] - evs[a];
+  if (cost <= 0.0005) return a === best ? '，是最佳选择。' : `，与${ACTION_NAME[best]}并列最佳。`;
+  if (cost < 0.005) return `；${ACTION_NAME[best]}仅领先 ${cost.toFixed(3)}，难分高下。`;
+  return `；最佳是${ACTION_NAME[best]}（${fmtEv(evs[best])}），这一选择损失了 ${cost.toFixed(3)}。`;
+}
+function decksRemaining(unseenExtra) {
+  if (S.decks === 0) return Infinity;
+  const half = Math.round((shoe.length + unseenExtra) / 26) / 2;
+  return Math.max(0.5, half);
+}
+function trueCount() { return runningCount / decksRemaining(holeHidden ? 1 : 0); }
+
+// ---------------------------------------------------------------- game state
+let hands = [], dealer = [], active = 0, phase = 'bet', holeHidden = true, bet = S.minBet;
+let lastQuizAt = -1;
+// Everything worth reading about the current round (shuffle notice, each graded decision,
+// settlement) accumulates here so a round-ending action does not erase its own feedback.
+let roundLog = [], midShuffle = false, lastAnalysis = null;
+
+const $ = id => document.getElementById(id);
+function setMsg(text, cls) { const m = $('msg'); m.textContent = text; m.className = 'msg' + (cls ? ' ' + cls : ''); }
+function showLog(extra, cls) { const parts = roundLog.slice(); if (extra) parts.push(extra); setMsg(parts.join('\n'), cls); }
+
+function cardEl(c, extraClass) {
+  const el = document.createElement('div');
+  if (!c) { el.className = 'card back'; return el; }
+  const red = c.suit === '♥' || c.suit === '♦';
+  el.className = 'card' + (red ? ' red' : '') + (extraClass ? ' ' + extraClass : '');
+  el.innerHTML = `<span>${c.rank}</span><span class="s">${c.suit}</span>`;
+  return el;
+}
+
+function handOptions(h) {
+  const two = h.cards.length === 2;
+  const aces = h.cards[0].rank === 'A';
+  return {
+    canHit: !h.splitAces,
+    canDouble: two && !h.splitAces && (!h.fromSplit || S.das) && bankroll >= h.bet,
+    canSplit: isPair(h.cards) && hands.length < 4 && bankroll >= h.bet && (!(aces && h.fromSplit) || S.resplitAces),
+    canSurrender: S.surrender && two && !h.fromSplit && hands.length === 1,
+  };
+}
+
+function recommend(h) {
+  const opts = handOptions(h);
+  const choices = basicChoices(h.cards, dealer[0], opts), basic = choices[0];
+  if (S.deviations && hasHiLo()) {
+    const tc = trueCount();
+    const dev = deviation(h.cards, dealer[0], tc, S, opts);
+    if (dev && dev !== basic) return { action: dev, basic, tc, index: true, accepted: [dev] };
+  }
+  return { action: basic, basic, accepted: choices };
+}
+
+function startHand() {
+  bet = Math.max(1, Math.floor(+$('bet').value || S.minBet));
+  if (bet > bankroll) { setMsg('注额超过资金。', 'bad'); return; }
+  roundLog = []; midShuffle = false; lastAnalysis = null;
+  if (needShuffle) { shuffle(); if (S.decks) roundLog.push('已洗牌：新牌靴共 ' + S.decks + ' 副。计数归零。'); }
+  bankroll -= bet;
+  hands = [{ cards: [draw(true)], bet, fromSplit: false, splitAces: false, doubled: false, surrendered: false, done: false, insured: 0 }];
+  dealer = [draw(true)];
+  hands[0].cards.push(draw(true));
+  dealer.push(draw(false));
+  holeHidden = true; active = 0;
+  if (cardValue(dealer[0]) === 11 && bankroll >= bet / 2) { phase = 'insurance'; render(); return; }
+  afterInsurance();
+}
+
+function decideInsurance(take) {
+  const tc = trueCount();
+  const should = hasHiLo() && tc >= 3;
+  stats.ins++;
+  if (take === should) stats.insCorrect++;
+  const verdict = take === should ? '✓ ' : '✗ ';
+  const why = hasHiLo()
+    ? `Hi-Lo：真数 ≥ +3 时买保险（当前 ${fmtTc(tc)}）。不算牌的基本策略：从不买。`
+    : countingOn() ? 'Ace-Five 不提供保险信息：从不买。' : '无限牌靴：保险永远是亏的。';
+  if (take) { bankroll -= bet / 2; hands[0].insured = bet / 2; }
+  roundLog.push(verdict + (take ? '买了' : '没买') + '保险。' + why);
+  afterInsurance(take === should ? 'good' : 'bad');
+}
+
+function afterInsurance(cls) {
+  const up = cardValue(dealer[0]);
+  const dealerBJ = (up === 11 || up === 10) && handTotal(dealer).total === 21;
+  const playerBJ = handTotal(hands[0].cards).total === 21;
+  if (dealerBJ || playerBJ) { revealHole(); settle(); return; }
+  phase = 'play';
+  showLog('该你了。', cls);
+  render();
+}
+
+function revealHole() { if (holeHidden) { holeHidden = false; seeCard(dealer[1]); } }
+
+function act(a) {
+  if (phase !== 'play') return;
+  const h = hands[active];
+  const opts = handOptions(h);
+  if ((a === 'H' && !opts.canHit) || (a === 'D' && !opts.canDouble) || (a === 'P' && !opts.canSplit) || (a === 'R' && !opts.canSurrender)) return;
+  const rec = recommend(h);
+  stats.decisions++;
+  const ok = rec.accepted.includes(a);
+  if (ok) stats.correct++;
+  const ctx = `${describe(h.cards)} 对 ${dealer[0].rank === 'A' ? 'A' : cardValue(dealer[0])}`;
+  let text = ok ? `✓ ${ACTION_NAME[a]}正确（${ctx}）${a === rec.action ? '' : '，与' + ACTION_NAME[rec.action] + '并列'}。`
+                : `✗ 你选了${ACTION_NAME[a]}；正确打法是${ACTION_NAME[rec.action]}（${ctx}）。`;
+  if (rec.index) text += `\n真数 ${fmtTc(rec.tc)} 下的指数打法（单纯基本策略：${ACTION_NAME[rec.basic]}）。`;
+  if (S.evMode !== 'off') {
+    const { evs, approx } = analyzeHand(h);
+    lastAnalysis = { evs, approx, chosen: a, ctx };
+    text += `\n你的${ACTION_NAME[a]}的期望值：每单位注 ${fmtEv(evs[a])}` + evVerdict(evs, a);
+  }
+  roundLog.push(text);
+  showLog(null, ok ? 'good' : 'bad');
+
+  if (a === 'H') {
+    h.cards.push(draw(true));
+    const t = handTotal(h.cards).total;
+    if (t > 21) { h.bust = true; h.done = true; } else if (t === 21) h.done = true;
+  } else if (a === 'S') {
+    h.done = true;
+  } else if (a === 'D') {
+    bankroll -= h.bet; h.bet *= 2; h.doubled = true;
+    h.cards.push(draw(true));
+    if (handTotal(h.cards).total > 21) h.bust = true;
+    h.done = true;
+  } else if (a === 'P') {
+    bankroll -= h.bet;
+    const aces = h.cards[0].rank === 'A';
+    const h2 = { cards: [h.cards[1]], bet: h.bet, fromSplit: true, splitAces: aces, doubled: false, surrendered: false, done: false, insured: 0 };
+    h.cards = [h.cards[0]]; h.fromSplit = true; h.splitAces = aces;
+    hands.splice(active + 1, 0, h2);
+    h.cards.push(draw(true)); h2.cards.push(draw(true));
+    if (aces) for (const x of [h, h2]) x.done = !(S.resplitAces && x.cards[1].rank === 'A' && hands.length < 4);
+    else for (const x of [h, h2]) if (handTotal(x.cards).total === 21) x.done = true;
+  } else if (a === 'R') {
+    bankroll += h.bet / 2; h.surrendered = true; h.done = true;
+  }
+  nextHand();
+}
+
+function nextHand() {
+  while (active < hands.length && hands[active].done) active++;
+  if (active < hands.length) { render(); return; }
+  dealerPlay();
+}
+
+function dealerPlay() {
+  revealHole();
+  const anyLive = hands.some(h => !h.bust && !h.surrendered);
+  if (anyLive) {
+    for (;;) {
+      const { total, soft } = handTotal(dealer);
+      if (total > 17 || (total === 17 && !(soft && S.h17))) break;
+      dealer.push(draw(true));
+    }
+  }
+  settle();
+}
+
+function settle() {
+  const d = handTotal(dealer).total;
+  const dealerBJ = dealer.length === 2 && d === 21;
+  const lines = [];
+  let net = 0;
+  hands.forEach((h, i) => {
+    const t = handTotal(h.cards).total;
+    const natural = !h.fromSplit && h.cards.length === 2 && t === 21;
+    let result, payout = 0;
+    if (h.surrendered) { result = '投降'; net -= h.bet / 2; }
+    else if (dealerBJ) {
+      if (natural) { result = '平局（双方黑杰克）'; payout = h.bet; stats.push++; }
+      else { result = '输，庄家黑杰克'; net -= h.bet; stats.lost++; }
+    }
+    else if (natural) { result = '黑杰克！'; payout = h.bet + h.bet * S.bjPays; net += h.bet * S.bjPays; stats.won++; }
+    else if (h.bust) { result = '爆牌'; net -= h.bet; stats.lost++; }
+    else if (d > 21) { result = '赢，庄家爆牌'; payout = 2 * h.bet; net += h.bet; stats.won++; }
+    else if (t > d) { result = '赢'; payout = 2 * h.bet; net += h.bet; stats.won++; }
+    else if (t < d) { result = '输'; net -= h.bet; stats.lost++; }
+    else { result = '平局'; payout = h.bet; stats.push++; }
+    if (h.surrendered) stats.lost++;
+    if (h.insured) {
+      if (dealerBJ) { payout += h.insured * 3; net += h.insured * 2; result += '，保险赔付'; }
+      else { net -= h.insured; }
+    }
+    bankroll += payout;
+    lines.push((hands.length > 1 ? `第 ${i + 1} 手：` : '') + result);
+  });
+  stats.hands++; stats.net += net;
+  bankroll = Math.round(bankroll * 100) / 100;
+  phase = 'done';
+  if (midShuffle) lines.push('牌靴在这一手中途用完并已重洗；计数从 0 重新开始。');
+  if (shoe.length <= cutIndex) { needShuffle = true; lines.push('已到切牌位：下一手前洗牌。'); }
+  roundLog.push(lines.join('\n') + `\n本轮净胜：${net >= 0 ? '+' : ''}${net}`);
+  showLog(null, net > 0 ? 'good' : net < 0 ? 'bad' : '');
+  save('bj.stats', stats); save('bj.bank', { bankroll });
+  render();
+}
+
+function quizDue() {
+  return countingOn() && S.quizEvery > 0 && stats.hands > 0 && stats.hands % S.quizEvery === 0 && lastQuizAt !== stats.hands && !needShuffle;
+}
+function showQuiz() {
+  lastQuizAt = stats.hands;
+  $('quiz-info').textContent = `${S.decks} 副牌靴，约剩 ${decksRemaining(0)} 副。`;
+  $('quiz-rc').value = ''; $('quiz-tc').value = ''; $('quiz-af').value = '';
+  $('quiz-hilo-row').classList.toggle('hidden', !hasHiLo()); $('quiz-tc-row').classList.toggle('hidden', !hasHiLo());
+  $('quiz-af-row').classList.toggle('hidden', !hasAceFive());
+  $('quiz-result').classList.add('hidden'); $('quiz-submit').classList.remove('hidden'); $('quiz-continue').classList.add('hidden');
+  $('quiz').classList.remove('hidden');
+  (hasHiLo() ? $('quiz-rc') : $('quiz-af')).focus();
+}
+$('quiz-submit').onclick = () => {
+  let ok = true, text = '';
+  if (hasHiLo()) {
+    const rc = parseInt($('quiz-rc').value, 10);
+    if (Number.isNaN(rc)) { $('quiz-rc').focus(); return; }
+    const tcAns = parseFloat($('quiz-tc').value);
+    const tc = runningCount / decksRemaining(0);
+    const rcOk = rc === runningCount;
+    ok = ok && rcOk;
+    text += (rcOk ? '✓ ' : '✗ ') + `Hi-Lo 流水数是 ${runningCount}。`;
+    if (!Number.isNaN(tcAns)) text += `\n${Math.abs(tcAns - tc) <= 0.5 ? '✓' : '✗'} 真数是 ${fmtTc(tc)}（${runningCount} ÷ ${decksRemaining(0)} 副）。`;
+    else text += `\n真数：${fmtTc(tc)}。`;
+  }
+  if (hasAceFive()) {
+    const af = parseInt($('quiz-af').value, 10);
+    if (Number.isNaN(af)) { $('quiz-af').focus(); return; }
+    const afOk = af === aceFiveCount;
+    ok = ok && afOk;
+    text += (text ? '\n' : '') + (afOk ? '✓ ' : '✗ ') + `Ace-Five 计数是 ${aceFiveCount}。`;
+  }
+  stats.quizzes++; if (ok) stats.quizCorrect++;
+  save('bj.stats', stats);
+  const r = $('quiz-result'); r.textContent = text; r.className = 'msg ' + (ok ? 'good' : 'bad');
+  $('quiz-submit').classList.add('hidden'); $('quiz-continue').classList.remove('hidden'); $('quiz-continue').focus();
+};
+$('quiz-continue').onclick = () => { $('quiz').classList.add('hidden'); startHand(); };
+
+function suggestedBet() {
+  // Hi-Lo: 1 unit at TC ≤ 1, then (TC − 1) units, capped at an 8-unit spread.
+  const tc = Math.floor(trueCount());
+  return S.minBet * Math.min(8, Math.max(1, tc - 1));
+}
+function aceFiveBet() {
+  // Ace-Five: at +2 or more double the last bet, capped at 8 units; otherwise the minimum.
+  return aceFiveCount >= 2 ? Math.min(8 * S.minBet, 2 * bet) : S.minBet;
+}
+function betHint() {
+  const parts = [];
+  if (hasHiLo()) parts.push(`Hi-Lo 真数 ${fmtTc(trueCount())} → 建议下注 ${suggestedBet()}`);
+  if (hasAceFive()) parts.push(`Ace-Five ${aceFiveCount >= 0 ? '+' : ''}${aceFiveCount} → 建议下注 ${aceFiveBet()}`);
+  return parts.join('  ·  ');
+}
+function countText() {
+  if (!countingOn()) return '无限牌靴：不适用算牌';
+  const parts = [];
+  if (hasHiLo()) parts.push(`Hi-Lo 流水数 ${runningCount >= 0 ? '+' : ''}${runningCount} · 真数 ${fmtTc(trueCount())}`);
+  if (hasAceFive()) parts.push(`Ace-Five ${aceFiveCount >= 0 ? '+' : ''}${aceFiveCount}`);
+  return parts.join('  ·  ');
+}
+function renderAnalysis() {
+  const panel = $('ev-panel'), body = $('ev-body');
+  panel.classList.toggle('hidden', S.evMode === 'off');
+  if (S.evMode === 'off') return;
+  let evs = null, approx = [], chosen = null, title;
+  if (phase === 'play' && S.evMode === 'before') {
+    ({ evs, approx } = analyzeHand(hands[active]));
+    title = `当前：${describe(hands[active].cards)} 对 ${dealer[0].rank === 'A' ? 'A' : cardValue(dealer[0])}`;
+  } else if (lastAnalysis) {
+    ({ evs, approx, chosen } = lastAnalysis);
+    title = `上一次决策：${lastAnalysis.ctx}`;
+  }
+  if (!evs) { body.textContent = phase === 'play' ? '请先做出选择；之后会显示每个选项的期望值。' : '请先发牌。'; return; }
+  body.innerHTML = evTableHtml(evs, chosen, title, approx);
+}
+function evTableHtml(evs, chosen, title, approx) {
+  const best = bestAction(evs);
+  let html = `<div><b>${title}</b></div><table class="chart" style="margin-top:6px"><tr><th>动作</th><th>每单位期望值</th></tr>`;
+  for (const k of Object.keys(evs).sort((a, b) => evs[b] - evs[a])) {
+    const mark = (approx && approx.includes(k) ? ' ≈' : '') + (k === best ? ' ◀ 最佳' : '') + (k === chosen ? '（你）' : '');
+    html += `<tr><td class="${k === best ? 'D' : 'H'}">${ACTION_NAME[k]}</td><td class="${k === best ? 'D' : 'H'}">${fmtEv(evs[k])}${mark}</td></tr>`;
+  }
+  html += '</table>';
+  if (chosen && chosen !== best) {
+    const cost = evs[best] - evs[chosen];
+    html += `<div style="margin-top:6px">${cost < 0.005 ? `与${ACTION_NAME[best]}相差仅 ${cost.toFixed(3)}：难分高下。` : `相比${ACTION_NAME[best]}，你的${ACTION_NAME[chosen]}损失了 ${cost.toFixed(3)} 单位注。`}</div>`;
+  }
+  if (approx && approx.length) html += '<div class="small" style="margin-top:4px">≈ 为有放回且不再分牌的估计值；其余数值对剩余的牌是精确的。</div>';
+  return html;
+}
+// A representative shoe composition for a Hi-Lo true count: each +1 of true count means one
+// more high card (10..A) and one fewer low card (2..6) per remaining deck, spread pro rata.
+function compositionForTc(tc) {
+  const perDeck = [0, 4, 4, 4, 4, 4, 4, 4, 4, 4, 16];
+  const shift = Math.max(-19, Math.min(19, tc || 0)) / 2;
+  for (let v = 2; v <= 6; v++) perDeck[v] -= shift / 5;
+  perDeck[1] += shift / 5; perDeck[10] += shift * 4 / 5;
+  const n = perDeck.reduce((a, b) => a + b, 0);
+  return perDeck.map(x => Math.max(0, x) / n);
+}
+
+function render() {
+  const dt = $('dealer-total');
+  const dh = $('dealer-hand'); dh.innerHTML = '';
+  dealer.forEach((c, i) => dh.appendChild(cardEl(i === 1 && holeHidden ? null : c)));
+  if (dealer.length) {
+    const shown = holeHidden ? handTotal([dealer[0]]) : handTotal(dealer);
+    dt.textContent = `（${holeHidden ? '明牌 ' : ''}${shown.soft && shown.total !== 21 ? '软' : ''}${shown.total}）`;
+  } else dt.textContent = '';
+
+  const ph = $('player-hands'); ph.innerHTML = '';
+  hands.forEach((h, i) => {
+    const el = document.createElement('div');
+    el.className = 'hand' + (phase === 'play' && i === active ? ' active' : '');
+    h.cards.forEach(c => el.appendChild(cardEl(c)));
+    const { total, soft } = handTotal(h.cards);
+    const tot = document.createElement('span'); tot.className = 'total';
+    tot.textContent = (soft && total !== 21 ? '软' : '') + total;
+    el.appendChild(tot);
+    const tags = [];
+    if (h.doubled) tags.push('已加倍');
+    if (h.surrendered) tags.push('投降');
+    if (h.bust) tags.push('爆牌');
+    if (!h.fromSplit && h.cards.length === 2 && total === 21) tags.push('黑杰克');
+    tags.push('注 ' + h.bet);
+    for (const t of tags) { const s = document.createElement('span'); s.className = 'tag'; s.textContent = t; el.appendChild(s); }
+    ph.appendChild(el);
+  });
+
+  $('rules-info').textContent = `${S.decks === 0 ? '∞' : S.decks}D · ${S.h17 ? 'H17' : 'S17'} · ${S.das ? '分牌后可加倍' : '分牌后不可加倍'} · ${S.surrender ? '可投降' : '不可投降'} · BJ ${S.bjPays === 1.5 ? '3:2' : '6:5'}`;
+  $('shoe-info').textContent = S.decks === 0 ? '牌靴：无限，每张牌有放回抽取' : `牌靴：剩 ${shoe.length} 张（未见约 ${decksRemaining(holeHidden ? 1 : 0)} 副）`;
+  $('count-info').textContent = S.showCount ? countText() : '';
+  const edge = S.showEdge && phase !== 'play' && phase !== 'insurance' ? currentEdge() : null;
+  $('edge-info').textContent = edge === null ? '' : `下一手你的优势：${S.decks === 0 ? '' : '≈ '}${fmtPct(edge)}`;
+  $('bankroll-info').textContent = `资金：${bankroll}`;
+
+  $('bet-row').classList.toggle('hidden', phase !== 'bet');
+  $('action-row').classList.toggle('hidden', phase !== 'play');
+  $('insurance-row').classList.toggle('hidden', phase !== 'insurance');
+  $('next-row').classList.toggle('hidden', phase !== 'done');
+  $('bet-hint').textContent = S.hints && phase === 'bet' ? betHint() : '';
+
+  if (phase === 'play') {
+    const o = handOptions(hands[active]);
+    const en = { H: o.canHit, S: true, D: o.canDouble, P: o.canSplit, R: o.canSurrender };
+    document.querySelectorAll('#action-row button').forEach(b => { b.disabled = !en[b.dataset.act]; });
+  }
+
+  $('st-hands').textContent = stats.hands;
+  $('st-wlp').textContent = `${stats.won} / ${stats.lost} / ${stats.push}`;
+  $('st-net').textContent = (stats.net >= 0 ? '+' : '') + stats.net;
+  $('st-strat').textContent = stats.decisions ? `${stats.correct} / ${stats.decisions} (${Math.round(100 * stats.correct / stats.decisions)}%)` : '–';
+  $('st-quiz').textContent = stats.quizzes ? `${stats.quizCorrect} / ${stats.quizzes}` : '–';
+  $('st-ins').textContent = stats.ins ? `${stats.insCorrect} / ${stats.ins}` : '–';
+  renderAnalysis();
+  renderChartHighlight();
+  renderIndexTables();
+  renderEvChart();
+}
+
+// ---------------------------------------------------------------- strategy chart
+function chartCell(cards, up, opts) {
+  if (S.decks < 4) {
+    const { evs } = evaluateHand(cards, up, opts, freshCounts(cards.concat([up])));
+    const order = Object.keys(evs).sort((a, b) => evs[b] - evs[a]);
+    if (order[0] === 'D') return evs.S > evs.H ? 'Ds' : 'D';
+    if (order[0] === 'R') return 'R' + order[1].toLowerCase();
+    return order[0];
+  }
+  const a = basicStrategy(cards, up, S, opts);
+  if (a === 'D') return basicStrategy(cards, up, S, Object.assign({}, opts, { canDouble: false })) === 'S' ? 'Ds' : 'D';
+  if (a === 'R') { const f = basicStrategy(cards, up, S, Object.assign({}, opts, { canSurrender: false })); return 'R' + f.toLowerCase(); }
+  return a;
+}
+const mk = (r, s) => ({ rank: String(r), suit: s || '♠' });
+function chartRows() {
+  const rows = [];
+  rows.push({ key: 'hard:8', label: '5–8', cards: [mk(2), mk(6)] });
+  for (let t = 9; t <= 16; t++) rows.push({ key: 'hard:' + t, label: String(t), cards: t <= 12 ? [mk(2), mk(t - 2)] : [mk(t - 10), mk(10)] });
+  rows.push({ key: 'hard:17', label: '17+', cards: [mk(7), mk(10)] });
+  for (let x = 2; x <= 9; x++) rows.push({ key: 'soft:' + (11 + x), label: 'A,' + x, cards: [mk('A'), mk(x)] });
+  for (const r of ['A', 2, 3, 4, 5, 6, 7, 8, 9, 10]) rows.push({ key: 'pair:' + (r === 'A' ? 11 : r), label: r + ',' + r, cards: [mk(r, '♠'), mk(r, '♥')] });
+  return rows;
+}
+function renderChart() {
+  const ups = [2, 3, 4, 5, 6, 7, 8, 9, 10, 'A'];
+  const opts = { canDouble: true, canSplit: true, canSurrender: S.surrender };
+  let html = '<table class="chart"><tr><th></th>' + ups.map(u => `<th>${u}</th>`).join('') + '</tr>';
+  for (const row of chartRows()) {
+    html += `<tr><th>${row.label}</th>`;
+    for (const u of ups) {
+      const code = chartCell(row.cards, mk(u), opts);
+      const uv = u === 'A' ? 11 : u;
+      const indexed = S.deviations && INDEX_PLAYS.some(r => indexRowActive(r) && !indexRowNote(r) && r.kind !== 'ins'
+        && r.up === uv && (r.kind === 'pair' ? row.key === 'pair:10' : row.key === 'hard:' + r.total));
+      html += `<td class="${code[0]}" data-key="${row.key}" data-up="${uv}">${code}${indexed ? '<sup>•</sup>' : ''}</td>`;
+    }
+    html += '</tr>';
+  }
+  html += '</table><div class="legend" style="margin-top:6px"><span style="background:var(--c-h)">H 要牌</span><span style="background:var(--c-s)">S 停牌</span><span style="background:var(--c-d)">D 加倍（Ds：不能加倍则停牌）</span><span style="background:var(--c-p)">P 分牌</span><span style="background:var(--c-r)">R 投降（不能投降则按 h/s/p）</span>' + (S.deviations ? '<span>• 有指数打法</span>' : '') + '</div>';
+  $('chart-wrap').innerHTML = html;
+}
+function indexTableHtml(highlightKey) {
+  const label = a => (ACTION_NAME[a] || a);
+  let html = '<table class="chart"><tr><th>手牌</th><th>对</th><th>指数</th><th>达到或以上</th><th>以下</th><th></th></tr>';
+  let group = '';
+  for (const r of INDEX_PLAYS) {
+    if (!indexRowActive(r)) continue;
+    const g = r.group || 'Illustrious 18';
+    if (g !== group) { group = g; html += `<tr><th colspan="6" style="text-align:left">${g}</th></tr>`; }
+    const note = indexRowNote(r);
+    const hl = indexRowKey(r) === highlightKey ? ' hl' : '';
+    const hand = r.kind === 'ins' ? '任意' : r.kind === 'pair' ? '10,10' : '硬' + r.total;
+    const dim = note ? ' style="opacity:.45"' : '';
+    html += `<tr${dim}><td class="H${hl}">${hand}</td><td class="H${hl}">${r.up === 11 ? 'A' : r.up}</td><td class="H${hl}">${r.index >= 0 ? '+' : '−'}${Math.abs(r.index)}</td>`
+      + `<td class="${r.above[0]}${hl}">${label(r.above)}</td><td class="${r.below[0]}${hl}">${label(r.below)}</td><td class="H${hl}" style="font-size:11px">${note}</td></tr>`;
+  }
+  return html + '</table><p class="small" style="margin:6px 0 0">Hi-Lo 真数达到或高于指数时按左边的动作打，低于时按右边。灰色行已被当前规则覆盖。</p>';
+}
+function renderIndexTables() {
+  let playKey = null;
+  if (!$('index-wrap').classList.contains('hidden')) {
+    if (phase === 'play') playKey = indexKeyForHand(hands[active].cards, dealer[0]);
+    else if (phase === 'insurance') playKey = 'ins:0:11';
+    $('index-wrap').innerHTML = indexTableHtml(playKey);
+  }
+  if (!$('drill-index-wrap').classList.contains('hidden')) {
+    const drillKey = drill && drill.answered ? indexKeyForHand(drill.cards, drill.up) : null;
+    $('drill-index-wrap').innerHTML = indexTableHtml(drillKey);
+  }
+}
+function renderChartHighlight() {
+  document.querySelectorAll('.chart td.hl').forEach(td => td.classList.remove('hl'));
+  if (phase !== 'play' || $('chart-wrap').classList.contains('hidden')) return;
+  const h = hands[active];
+  const o = handOptions(h);
+  const { total, soft } = handTotal(h.cards);
+  let key;
+  if (isPair(h.cards) && o.canSplit) key = 'pair:' + cardValue(h.cards[0]);
+  else if (soft && total <= 20) key = 'soft:' + total;
+  else key = 'hard:' + Math.min(17, Math.max(8, total));
+  const td = document.querySelector(`.chart td[data-key="${key}"][data-up="${cardValue(dealer[0])}"]`);
+  if (td) td.classList.add('hl');
+}
+
+// ---------------------------------------------------------------- play wiring
+$('deal').onclick = () => { if (phase !== 'bet') return; if (quizDue()) showQuiz(); else startHand(); };
+$('next-hand').onclick = () => { phase = 'bet'; $('bet').value = bet; $('deal').click(); };
+$('change-bet').onclick = () => { phase = 'bet'; render(); };
+document.querySelectorAll('#bet-row [data-chip]').forEach(b => b.onclick = () => { $('bet').value = (+$('bet').value || 0) + +b.dataset.chip; });
+$('bet-min').onclick = () => { $('bet').value = S.minBet; };
+document.querySelectorAll('#action-row button').forEach(b => b.onclick = () => act(b.dataset.act));
+document.querySelectorAll('#insurance-row button').forEach(b => b.onclick = () => decideInsurance(b.dataset.ins === '1'));
+$('reset-stats').onclick = () => { stats = Object.assign({}, STATS0); save('bj.stats', stats); render(); };
+$('toggle-chart').onclick = () => {
+  const w = $('chart-wrap'); w.classList.toggle('hidden');
+  $('toggle-chart').textContent = w.classList.contains('hidden') ? '显示' : '隐藏';
+  renderChartHighlight();
+};
+$('toggle-index').onclick = () => {
+  const w = $('index-wrap'); w.classList.toggle('hidden');
+  $('toggle-index').textContent = w.classList.contains('hidden') ? '显示' : '隐藏';
+  renderIndexTables();
+};
+$('toggle-drill-index').onclick = () => {
+  const w = $('drill-index-wrap'); w.classList.toggle('hidden');
+  $('toggle-drill-index').textContent = w.classList.contains('hidden') ? '显示' : '隐藏';
+  renderIndexTables();
+};
+
+// ---------------------------------------------------------------- strategy drill
+let drill = null, dstats = { n: 0, ok: 0, streak: 0, misses: {}, cells: {} };
+const DRILL_UPS = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'A'];
+// Representative two-card hand for a drill situation: hard total x (5..19), soft A+x (x = 2..9),
+// or a pair of rank x.
+function situationCards(kind, x) {
+  if (kind === 'pair') return [mk(x, '♠'), mk(x, '♥')];
+  if (kind === 'soft') return [mk('A'), mk(x)];
+  return x <= 12 ? [mk(2), mk(x - 2)] : [mk(x - 10), mk(10)];
+}
+function situationKey(cards, up) { return `${describe(cards)} 对 ${up.rank === 'A' ? 'A' : cardValue(up)}`; }
+// Every situation in the ticked hand types. base is 3 on a chart boundary (the answer differs
+// from a neighbouring cell), where mistakes cluster, and 1 elsewhere.
+let situationsCache = { key: '', list: [] };
+function drillSituations() {
+  const kinds = [];
+  if ($('drill-hard').checked) kinds.push('hard');
+  if ($('drill-soft').checked) kinds.push('soft');
+  if ($('drill-pair').checked) kinds.push('pair');
+  if (!kinds.length) kinds.push('hard');
+  const cacheKey = JSON.stringify([S.decks, S.h17, S.das, S.surrender, kinds]);
+  if (situationsCache.key === cacheKey) return situationsCache.list;
+  const xs = { hard: [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19], soft: [2, 3, 4, 5, 6, 7, 8, 9], pair: ['A', 2, 3, 4, 5, 6, 7, 8, 9, 10] };
+  const answer = (kind, x, ui) => {
+    const cards = situationCards(kind, x);
+    return basicAction(cards, mk(DRILL_UPS[ui]), { canDouble: true, canSplit: kind === 'pair', canSurrender: S.surrender });
+  };
+  const list = [];
+  for (const kind of kinds) xs[kind].forEach((x, xi) => {
+    for (let ui = 0; ui < 10; ui++) {
+      const a = answer(kind, x, ui);
+      const neighbours = [[xi - 1, ui], [xi + 1, ui], [xi, ui - 1], [xi, ui + 1]]
+        .filter(([i, j]) => i >= 0 && i < xs[kind].length && j >= 0 && j < 10);
+      const boundary = neighbours.some(([i, j]) => answer(kind, xs[kind][i], j) !== a);
+      const cards = situationCards(kind, x), up = mk(DRILL_UPS[ui]);
+      list.push({ kind, x, up: DRILL_UPS[ui], key: situationKey(cards, up), base: boundary ? 3 : 1 });
+    }
+  });
+  situationsCache = { key: cacheKey, list };
+  return list;
+}
+function weightedPick(items, weightOf) {
+  let total = 0;
+  for (const it of items) total += weightOf(it);
+  let r = Math.random() * total;
+  for (const it of items) { r -= weightOf(it); if (r < 0) return it; }
+  return items[items.length - 1];
+}
+function focusWeight(key) { return dstats.cells[key] || 0; }
+function randomDrillHand() {
+  const all = drillSituations();
+  let sit;
+  if (S.adaptive) {
+    // Half the deals come from situations still carrying a miss weight; the rest favour boundary cells.
+    const focus = all.filter(x => focusWeight(x.key) > 0);
+    sit = focus.length && Math.random() < 0.5 ? weightedPick(focus, x => focusWeight(x.key)) : weightedPick(all, x => x.base);
+  } else sit = all[Math.floor(Math.random() * all.length)];
+  const rnd = arr => arr[Math.floor(Math.random() * arr.length)];
+  const suit = () => rnd(SUITS);
+  let cards;
+  if (sit.kind === 'pair') cards = [mk(sit.x, suit()), mk(sit.x, suit())];
+  else if (sit.kind === 'soft') cards = [mk('A', suit()), mk(sit.x, suit())];
+  else {
+    // any two different non-ace cards making the hard total
+    const splits = [];
+    for (let a = 2; a <= 10; a++) { const b = sit.x - a; if (b >= 2 && b <= 10 && a !== b) splits.push([a, b]); }
+    const [a, b] = rnd(splits);
+    const face = v => (v === 10 ? rnd(['10', 'J', 'Q', 'K']) : String(v));
+    cards = [mk(face(a), suit()), mk(face(b), suit())];
+  }
+  const up = mk(sit.up === '10' ? rnd(['10', 'J', 'Q', 'K']) : sit.up, suit());
+  // Random true count for index-play practice, weighted toward the interesting range.
+  const tc = $('drill-dev').checked && countingOn() ? rnd([-3, -2, -1, 0, 0, 1, 1, 2, 2, 3, 3, 4, 5, 6]) : null;
+  return { cards, up, tc, key: sit.key };
+}
+function drillNext() {
+  drill = randomDrillHand();
+  const dd = $('drill-dealer'); dd.innerHTML = ''; dd.appendChild(cardEl(drill.up)); dd.appendChild(cardEl(null));
+  const dp = $('drill-player'); dp.innerHTML = ''; drill.cards.forEach(c => dp.appendChild(cardEl(c)));
+  const tot = document.createElement('span'); tot.className = 'total'; tot.textContent = describe(drill.cards); dp.appendChild(tot);
+  $('drill-tc').textContent = drill.tc === null ? '' : `真数：${fmtTc(drill.tc)}`;
+  const o = { canDouble: true, canSplit: isPair(drill.cards), canSurrender: S.surrender };
+  document.querySelectorAll('#drill-actions [data-act]').forEach(b => {
+    b.disabled = (b.dataset.act === 'P' && !o.canSplit) || (b.dataset.act === 'R' && !o.canSurrender);
+  });
+  $('drill-msg').textContent = '该你了。'; $('drill-msg').className = 'msg';
+  renderDrillEv(null);
+  renderIndexTables();
+}
+// Drill EVs: a fresh shoe of the current size minus the visible cards, or that shoe shifted to
+// the drill's true count. Exact for finite decks; with-replacement for the infinite shoe.
+function drillEvs() {
+  const o = { canDouble: true, canSplit: isPair(drill.cards), canSurrender: S.surrender };
+  const visible = drill.cards.concat([drill.up]);
+  if (S.decks === 0) return evaluateHand(drill.cards, drill.up, o, null, drill.tc === null ? null : compositionForTc(drill.tc));
+  let counts = freshCounts(visible);
+  if (drill.tc !== null) {
+    const p = compositionForTc(drill.tc), full = freshCounts([]);
+    counts = counts.map((c, v) => v ? Math.max(0, Math.round(p[v] * 52 * S.decks) - (full[v] - c)) : 0);
+  }
+  return evaluateHand(drill.cards, drill.up, o, counts);
+}
+function renderDrillEv(chosen) {
+  const panel = $('drill-ev-panel'), body = $('drill-ev');
+  panel.classList.toggle('hidden', S.evMode === 'off');
+  if (S.evMode === 'off' || !drill) return;
+  if (chosen === null && S.evMode !== 'before') { body.textContent = '请先作答；之后会显示每个选项的期望值。'; return; }
+  const ctx = `${describe(drill.cards)} 对 ${drill.up.rank === 'A' ? 'A' : cardValue(drill.up)}`;
+  const basis = drill.tc === null ? '新牌靴' : `真数 ${fmtTc(drill.tc)} 的牌靴`;
+  const { evs, approx } = drillEvs();
+  body.innerHTML = evTableHtml(evs, chosen, `${ctx} (${basis})`, approx);
+}
+function drillAnswer(a) {
+  if (!drill || drill.answered) return;
+  if (a === 'P' && !isPair(drill.cards)) return;
+  if (a === 'R' && !S.surrender) return;
+  drill.answered = true;
+  const o = { canDouble: true, canSplit: isPair(drill.cards), canSurrender: S.surrender };
+  const choices = basicChoices(drill.cards, drill.up, o), basic = choices[0];
+  let correct = basic, accepted = choices, note = '';
+  if (drill.tc !== null) {
+    const dev = deviation(drill.cards, drill.up, drill.tc, S, o);
+    if (dev && dev !== basic) { correct = dev; accepted = [dev]; note = ` 真数 ${fmtTc(drill.tc)} 下的指数打法；单纯基本策略为${ACTION_NAME[basic]}。`; }
+  }
+  const ctx = `${describe(drill.cards)} 对 ${drill.up.rank === 'A' ? 'A' : cardValue(drill.up)}`;
+  const ok = accepted.includes(a);
+  dstats.n++; if (ok) { dstats.ok++; dstats.streak++; } else { dstats.streak = 0; dstats.misses[ctx] = (dstats.misses[ctx] || 0) + 1; }
+  // A miss puts the situation in the focus pool for about three correct answers.
+  const w = focusWeight(ctx);
+  if (ok) { if (w <= 1) delete dstats.cells[ctx]; else dstats.cells[ctx] = w - 1; }
+  else dstats.cells[ctx] = Math.min(9, w + 3);
+  const m = $('drill-msg');
+  let text = (ok ? `✓ ${ACTION_NAME[a]}正确（${ctx}）${a === correct ? '' : '，与' + ACTION_NAME[correct] + '并列'}。` : `✗ ${ACTION_NAME[a]}；正确是${ACTION_NAME[correct]}（${ctx}）。`) + note;
+  if (S.evMode !== 'off') {
+    const { evs } = drillEvs();
+    text += `\n你的${ACTION_NAME[a]}的期望值：每单位注 ${fmtEv(evs[a])}` + evVerdict(evs, a);
+  }
+  m.textContent = text;
+  m.className = 'msg ' + (ok ? 'good' : 'bad');
+  save('bj.drill', dstats);
+  renderDrillStats();
+  renderDrillEv(a);
+  renderIndexTables();
+}
+function renderDrillStats() {
+  $('dr-n').textContent = dstats.n; $('dr-ok').textContent = dstats.ok; $('dr-streak').textContent = dstats.streak;
+  $('dr-acc').textContent = dstats.n ? Math.round(100 * dstats.ok / dstats.n) + '%' : '–';
+  $('dr-focus').textContent = Object.keys(dstats.cells).length;
+  $('drill-adaptive-note').textContent = S.adaptive ? '自适应出题已开启：答错的局面会反复出现直到答对（见设置）。' : '自适应出题已关闭：局面完全随机出现（见设置）。';
+  const worst = Object.entries(dstats.misses).sort((a, b) => b[1] - a[1]).slice(0, 8);
+  $('dr-misses').innerHTML = worst.length ? '<b>错得最多：</b><br>' + worst.map(([k, v]) => `${k} (${v})`).join('<br>') : '';
+}
+dstats = load('bj.drill', dstats);
+$('drill-next').onclick = drillNext;
+$('dr-reset').onclick = () => { dstats = { n: 0, ok: 0, streak: 0, misses: {}, cells: {} }; save('bj.drill', dstats); renderDrillStats(); };
+document.querySelectorAll('#drill-actions [data-act]').forEach(b => b.onclick = () => drillAnswer(b.dataset.act));
+
+// ---------------------------------------------------------------- count drill
+let cdStats = load('bj.countdrill', { rounds: 0, ok: 0, best: null }), cdRun = null;
+function renderCdStats() {
+  $('cd-rounds').textContent = cdStats.rounds; $('cd-ok').textContent = cdStats.ok;
+  $('cd-best').textContent = cdStats.best === null ? '–' : cdStats.best;
+}
+$('cd-start').onclick = () => {
+  if (cdRun) clearTimeout(cdRun.timer);
+  const n = Math.max(4, +$('cd-n').value || 26), ms = Math.max(100, +$('cd-ms').value || 700), group = +$('cd-group').value;
+  const deck = [];
+  for (let d = 0; d < Math.ceil(n / 52); d++) for (const s of SUITS) for (const r of RANKS) deck.push({ rank: r, suit: s });
+  for (let i = deck.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [deck[i], deck[j]] = [deck[j], deck[i]]; }
+  const cards = deck.slice(0, n);
+  const system = $('cd-system').value, countFn = system === 'acefive' ? aceFive : hiLo;
+  cdRun = { cards, i: 0, count: cards.reduce((a, c) => a + countFn(c), 0), ms, timer: null, system: system === 'acefive' ? 'Ace-Five' : 'Hi-Lo' };
+  $('cd-answer-row').classList.add('hidden'); $('cd-msg').textContent = '计数中…'; $('cd-msg').className = 'msg';
+  const step = () => {
+    const box = $('count-cards'); box.innerHTML = '';
+    if (cdRun.i >= cards.length) {
+      $('count-progress').textContent = '结束。请输入流水数。';
+      $('cd-answer-row').classList.remove('hidden'); $('cd-answer').value = ''; $('cd-answer').focus();
+      return;
+    }
+    for (let k = 0; k < group && cdRun.i < cards.length; k++, cdRun.i++) box.appendChild(cardEl(cards[cdRun.i], 'flash'));
+    $('count-progress').textContent = `${cdRun.i} / ${cards.length}`;
+    cdRun.timer = setTimeout(step, ms * group);
+  };
+  step();
+};
+$('cd-submit').onclick = () => {
+  if (!cdRun) return;
+  const ans = parseInt($('cd-answer').value, 10);
+  if (Number.isNaN(ans)) return;
+  const ok = ans === cdRun.count;
+  cdStats.rounds++;
+  if (ok) { cdStats.ok++; if (cdStats.best === null || cdRun.ms < cdStats.best) cdStats.best = cdRun.ms; }
+  $('cd-msg').textContent = (ok ? '✓ 正确。' : `✗ 你答的是 ${ans}。`) + `${cdRun.system} 在 ${cdRun.cards.length} 张牌后的流水数：${cdRun.count}。`;
+  $('cd-msg').className = 'msg ' + (ok ? 'good' : 'bad');
+  $('cd-answer-row').classList.add('hidden');
+  save('bj.countdrill', cdStats); renderCdStats();
+  cdRun = null;
+};
+$('cd-answer').addEventListener('keydown', e => { if (e.key === 'Enter') $('cd-submit').click(); });
+$('cd-reset').onclick = () => { cdStats = { rounds: 0, ok: 0, best: null }; save('bj.countdrill', cdStats); renderCdStats(); };
+
+// ---------------------------------------------------------------- settings
+function settingsToForm() {
+  $('s-decks').value = S.decks; $('s-h17').value = S.h17 ? '1' : '0'; $('s-bj').value = String(S.bjPays);
+  $('s-das').checked = S.das; $('s-sur').checked = S.surrender; $('s-rsa').checked = S.resplitAces;
+  $('s-pen').value = S.penetration; $('s-showcount').checked = S.showCount; $('s-hint').checked = S.hints;
+  $('s-quiz').value = S.quizEvery; $('s-dev').checked = S.deviations; $('s-min').value = S.minBet; $('s-bank').value = S.bankroll;
+  $('s-system').value = S.system; $('s-ev').value = S.evMode; $('s-edge').checked = S.showEdge; $('s-adaptive').checked = S.adaptive;
+}
+$('s-apply').onclick = () => {
+  S = {
+    decks: +$('s-decks').value, h17: $('s-h17').value === '1', bjPays: +$('s-bj').value,
+    das: $('s-das').checked, surrender: $('s-sur').checked, resplitAces: $('s-rsa').checked,
+    penetration: Math.min(0.95, Math.max(0.3, +$('s-pen').value || 0.75)),
+    showCount: $('s-showcount').checked, hints: $('s-hint').checked,
+    quizEvery: Math.max(0, Math.floor(+$('s-quiz').value || 0)), deviations: $('s-dev').checked,
+    system: $('s-system').value, evMode: $('s-ev').value, showEdge: $('s-edge').checked, adaptive: $('s-adaptive').checked,
+    minBet: Math.max(1, Math.floor(+$('s-min').value || 10)), bankroll: Math.max(1, Math.floor(+$('s-bank').value || 1000)),
+  };
+  save('bj.settings', S);
+  needShuffle = true; hands = []; dealer = []; phase = 'bet';
+  $('bet').value = S.minBet;
+  renderChart(); render(); renderDrillStats();
+  showTab('play');
+  setMsg('设置已应用。下次发牌时将重新洗牌。');
+};
+$('s-bank-reset').onclick = () => { bankroll = Math.max(1, Math.floor(+$('s-bank').value || 1000)); save('bj.bank', { bankroll }); render(); };
+
+// ---------------------------------------------------------------- fun facts
+// Simulation results, generated offline with simulate.js (same engine rules as the trainer's defaults).
+const SIM_RESULTS = /*SIM_RESULTS*/[{"mode":"basic","scheme":"固定 1 单位","edge":-0.298,"edgeSe":0.036,"perRound":-0.298,"perRoundSe":0.036,"avgBet":1,"sd":1.14,"rounds":10000000},{"mode":"hilo","scheme":"固定 1 单位","edge":-0.288,"edgeSe":0.036,"perRound":-0.288,"perRoundSe":0.036,"avgBet":1,"sd":1.14,"rounds":10000000},{"mode":"hilo","scheme":"注额跨度 1–4","edge":0.346,"edgeSe":0.043,"perRound":0.456,"perRoundSe":0.056,"avgBet":1.32,"sd":1.77,"rounds":10000000},{"mode":"hilo","scheme":"注额跨度 1–8","edge":0.724,"edgeSe":0.052,"perRound":1.088,"perRoundSe":0.078,"avgBet":1.5,"sd":2.45,"rounds":10000000},{"mode":"hilo","scheme":"注额跨度 1–16","edge":1.14,"edgeSe":0.065,"perRound":1.95,"perRoundSe":0.112,"avgBet":1.71,"sd":3.53,"rounds":10000000},{"mode":"hilo","scheme":"注额跨度 1–8，真数 < 0 时不玩","edge":1.624,"edgeSe":0.071,"perRound":1.686,"perRoundSe":0.074,"avgBet":1.04,"sd":2.33,"rounds":10000000},{"mode":"acefive","scheme":"固定 1 单位","edge":-0.352,"edgeSe":0.036,"perRound":-0.352,"perRoundSe":0.036,"avgBet":1,"sd":1.14,"rounds":10000000},{"mode":"acefive","scheme":"注额跨度 1–4","edge":0.013,"edgeSe":0.044,"perRound":0.023,"perRoundSe":0.079,"avgBet":1.78,"sd":2.5,"rounds":10000000},{"mode":"acefive","scheme":"注额跨度 1–8","edge":0.183,"edgeSe":0.053,"perRound":0.484,"perRoundSe":0.141,"avgBet":2.65,"sd":4.46,"rounds":10000000},{"mode":"acefive","scheme":"注额跨度 1–16","edge":0.321,"edgeSe":0.062,"perRound":1.356,"perRoundSe":0.262,"avgBet":4.22,"sd":8.29,"rounds":10000000},{"mode":"perfect","scheme":"固定 1 单位","edge":-0.079,"edgeSe":0.066,"perRound":-0.079,"perRoundSe":0.066,"avgBet":1,"sd":1.14,"rounds":3000000},{"mode":"perfect","scheme":"注额跨度 1–4","edge":0.685,"edgeSe":0.08,"perRound":0.971,"perRoundSe":0.113,"avgBet":1.42,"sd":1.96,"rounds":3000000},{"mode":"perfect","scheme":"注额跨度 1–8","edge":1.203,"edgeSe":0.097,"perRound":2.506,"perRoundSe":0.203,"avgBet":2.08,"sd":3.51,"rounds":3000000},{"mode":"perfect","scheme":"注额跨度 1–16","edge":1.616,"edgeSe":0.114,"perRound":5.57,"perRoundSe":0.393,"avgBet":3.45,"sd":6.81,"rounds":3000000},{"mode":"perfect","scheme":"注额跨度 1–8，优势 < 0 时不玩","edge":2.203,"edgeSe":0.139,"perRound":3.087,"perRoundSe":0.195,"avgBet":1.4,"sd":3.38,"rounds":3000000}]/*END*/;
+const SP_RESULTS = /*SP_RESULTS*/[{"power": "hole", "seats": 1, "seat": 0, "firstbet": false, "edge": 14.59, "se": 0.12, "perRound": 14.59, "differs": 37.8, "rounds": 1000000}, {"power": "hole", "seats": 4, "seat": 1, "firstbet": false, "edge": 14.66, "se": 0.12, "perRound": 14.66, "differs": 37.9, "rounds": 1000000}, {"power": "both", "seats": 4, "seat": 1, "firstbet": false, "edge": 49.45, "se": 0.13, "perRound": 49.45, "differs": 48.9, "rounds": 1000000}, {"power": "both", "seats": 1, "seat": 0, "firstbet": false, "edge": 62.3, "se": 0.13, "perRound": 62.3, "differs": 53.4, "rounds": 1000000}, {"power": "both", "seats": 4, "seat": 3, "firstbet": false, "edge": 61.66, "se": 0.13, "perRound": 61.66, "differs": 53.1, "rounds": 1000000}, {"power": "next", "seats": 4, "seat": 0, "firstbet": false, "edge": 36.8, "se": 0.13, "perRound": 36.8, "differs": 39.3, "rounds": 1000000}, {"power": "next", "seats": 4, "seat": 1, "firstbet": false, "edge": 37, "se": 0.13, "perRound": 37, "differs": 39.3, "rounds": 1000000}, {"power": "next", "seats": 1, "seat": 0, "firstbet": false, "edge": 42.84, "se": 0.13, "perRound": 42.84, "differs": 43.5, "rounds": 1000000}, {"power": "next", "seats": 1, "seat": 0, "firstbet": true, "edge": 55.12, "se": 0.19, "perRound": 206.73, "differs": 43.4, "rounds": 1000000}, {"power": "next", "seats": 4, "seat": 3, "firstbet": false, "edge": 42.97, "se": 0.13, "perRound": 42.97, "differs": 43.1, "rounds": 1000000}]/*END*/;
+const SP_DISGUISED = /*SP_DISGUISED*/[{"power": "hole", "seats": 1, "seat": 0, "firstbet": false, "delta": 0.05, "edge": 3.22, "se": 0.11, "perRound": 3.22, "differs": 9.5, "rounds": 1000000}, {"power": "hole", "seats": 1, "seat": 0, "firstbet": false, "delta": 0.1, "edge": 5.92, "se": 0.11, "perRound": 5.92, "differs": 16, "rounds": 1000000}, {"power": "hole", "seats": 1, "seat": 0, "firstbet": false, "delta": 0.02, "edge": 0.83, "se": 0.11, "perRound": 0.83, "differs": 6.2, "rounds": 1000000}, {"power": "both", "seats": 1, "seat": 0, "firstbet": false, "delta": 0.02, "edge": 3.26, "se": 0.11, "perRound": 3.26, "differs": 6.2, "rounds": 1000000}, {"power": "hole", "seats": 1, "seat": 0, "firstbet": false, "delta": 0.2, "edge": 9.26, "se": 0.12, "perRound": 9.26, "differs": 26.1, "rounds": 1000000}, {"power": "both", "seats": 1, "seat": 0, "firstbet": false, "delta": 0.05, "edge": 8.28, "se": 0.11, "perRound": 8.28, "differs": 9.9, "rounds": 1000000}, {"power": "both", "seats": 1, "seat": 0, "firstbet": false, "delta": 0.1, "edge": 15.98, "se": 0.11, "perRound": 15.98, "differs": 17, "rounds": 1000000}, {"power": "both", "seats": 1, "seat": 0, "firstbet": false, "delta": 0.2, "edge": 28.99, "se": 0.11, "perRound": 28.99, "differs": 27.9, "rounds": 1000000}, {"power": "next", "seats": 1, "seat": 0, "firstbet": false, "delta": 0.05, "edge": 6.66, "se": 0.11, "perRound": 6.66, "differs": 10.6, "rounds": 1000000}, {"power": "next", "seats": 1, "seat": 0, "firstbet": false, "delta": 0.1, "edge": 12.48, "se": 0.11, "perRound": 12.48, "differs": 17.4, "rounds": 1000000}, {"power": "next", "seats": 1, "seat": 0, "firstbet": false, "delta": 0.02, "edge": 2.53, "se": 0.11, "perRound": 2.53, "differs": 6.4, "rounds": 1000000}, {"power": "next", "seats": 1, "seat": 0, "firstbet": false, "delta": 0.2, "edge": 21.91, "se": 0.11, "perRound": 21.91, "differs": 26.8, "rounds": 1000000}]/*END*/;
+// effect of removing one card of each rank from a fresh 6-deck shoe (S17 DAS LS), in percentage points of edge, exact per-pair assembly
+const EOR_RESULTS = [['A', -0.0940], ['10', -0.0919], ['9', -0.0409], ['8', -0.0084], ['7', 0.0407], ['2', 0.0692], ['6', 0.0779], ['3', 0.0829], ['4', 0.1121], ['5', 0.1434]];
+const SIM_NOTE = /*SIM_NOTE*/"用本训练器的引擎与庄家单挑模拟：6 副牌，庄家软 17 停牌，分牌后可加倍，晚投降，A 不可再分，切牌深度 75%，黑杰克赔 3:2。基本策略、Hi-Lo 和 Ace-Five 各 1000 万轮，完美记牌者 300 万轮。± 为一个标准误。类似规则下的公开数据：基本策略约 −0.35%，注额跨度 1–8 的 Hi-Lo 算牌者约 +0.5 到 +0.8%。"/*END*/;
+// EVs of every option for every strategy-chart cell at a fresh shoe of the current size, exact
+// for finite decks. Computed in chunks so the page stays responsive; cached per rule set.
+let chartEvCache = { key: '', cells: null, running: false, waiters: [] };
+function computeChartEvs(onDone) {
+  const key = JSON.stringify([S.decks, S.h17, S.das, S.surrender]);
+  if (chartEvCache.key === key && chartEvCache.cells) { onDone(chartEvCache.cells); return; }
+  if (chartEvCache.key === key && chartEvCache.running) { chartEvCache.waiters.push(onDone); return; }
+  chartEvCache = { key, cells: null, running: true, waiters: [onDone] };
+  const todo = [];
+  for (const row of chartRows()) for (const u of [2, 3, 4, 5, 6, 7, 8, 9, 10, 'A']) todo.push({ row, up: mk(u) });
+  const cells = new Map();
+  let i = 0;
+  const step = () => {
+    if (chartEvCache.key !== key) return;
+    const end = Math.min(todo.length, i + 10);
+    for (; i < end; i++) {
+      const { row, up } = todo[i];
+      const opts = { canDouble: true, canSplit: row.key.startsWith('pair'), canSurrender: S.surrender };
+      cells.set(row.key + '|' + cardValue(up), { label: `${row.label} 对 ${up.rank}`, evs: evaluateHand(row.cards, up, opts, freshCounts(row.cards.concat([up]))).evs });
+    }
+    chartEvCache.progress = `${i} / ${todo.length}`;
+    if (i < todo.length) { setTimeout(step, 0); return; }
+    chartEvCache.cells = cells; chartEvCache.running = false;
+    for (const cb of chartEvCache.waiters) cb(cells);
+    chartEvCache.waiters = [];
+  };
+  step();
+}
+// Player edge at a fresh shoe, assembled from every distinct two-card hand against every up card,
+// drawn without replacement, with naturals, the dealer's peek and +EV insurance handled directly.
+// Stand, hit, double and surrender are exact; splits use the estimate without re-splits, which
+// understates the edge by a few hundredths of a percent. Chunked and cached per rule set.
+let freshEdgeCache = { key: '', value: null, running: false, waiters: [] };
+function computeFreshEdge(onDone) {
+  if (S.decks === 0) { onDone(infiniteAnalyzer().roundEV()); return; }
+  const key = JSON.stringify([S.decks, S.h17, S.das, S.surrender, S.bjPays]);
+  if (freshEdgeCache.key === key && freshEdgeCache.value !== null) { onDone(freshEdgeCache.value); return; }
+  if (freshEdgeCache.key === key && freshEdgeCache.running) { freshEdgeCache.waiters.push(onDone); return; }
+  freshEdgeCache = { key, value: null, running: true, waiters: [onDone] };
+  const N = 52 * S.decks, n0 = v => (v === 10 ? 16 : 4) * S.decks;
+  const todo = [];
+  for (let a = 1; a <= 10; a++) for (let b = a; b <= 10; b++) for (let u = 1; u <= 10; u++) todo.push([a, b, u]);
+  let i = 0, ev = 0;
+  const step = () => {
+    if (freshEdgeCache.key !== key) return;
+    const end = Math.min(todo.length, i + 10);
+    for (; i < end; i++) {
+      const [a, b, u] = todo[i];
+      const cnt = [0]; for (let v = 1; v <= 10; v++) cnt[v] = n0(v);
+      let pr = cnt[a] / N; cnt[a]--; pr *= cnt[b] / (N - 1); cnt[b]--; pr *= cnt[u] / (N - 2); cnt[u]--;
+      if (a !== b) pr *= 2;   // either order of the two player cards
+      if (!pr) continue;
+      const pDealerBJ = u === 1 ? cnt[10] / (N - 3) : u === 10 ? cnt[1] / (N - 3) : 0;
+      let e;
+      if (a === 1 && b === 10) e = (1 - pDealerBJ) * S.bjPays;
+      else {
+        const cards = [mk(a === 1 ? 'A' : a), mk(b === 1 ? 'A' : b)], up = mk(u === 1 ? 'A' : u);
+        const { evs } = evaluateHand(cards, up, { canDouble: true, canSplit: a === b, canSurrender: S.surrender }, cnt);
+        e = -pDealerBJ + (1 - pDealerBJ) * Math.max(...Object.values(evs));
+      }
+      ev += pr * e;
+      if (u === 1) ev += pr * Math.max(0, 0.5 * (3 * cnt[10] / (N - 3) - 1));
+    }
+    if (i < todo.length) { setTimeout(step, 0); return; }
+    freshEdgeCache.value = ev; freshEdgeCache.running = false;
+    for (const cb of freshEdgeCache.waiters) cb(ev);
+    freshEdgeCache.waiters = [];
+  };
+  step();
+}
+// Diverging colour for an EV: red toward the dealer, green toward the player, neutral at zero.
+function evColor(ev) {
+  const css = getComputedStyle(document.documentElement);
+  const hex = name => { const h = css.getPropertyValue(name).trim().slice(1); return [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16)); };
+  const mid = hex('--div-mid'), pole = hex(ev < 0 ? '--div-neg' : '--div-pos');
+  const t = Math.min(1, Math.abs(ev) / 0.8);
+  return 'rgb(' + mid.map((m, i) => Math.round(m + (pole[i] - m) * t)).join(',') + ')';
+}
+// Chart-shaped table of best-play EVs. cellEvs(rowKey, upValue) returns an EV map, or null while computing.
+function evChartHtml(cellEvs, highlight) {
+  const ups = [2, 3, 4, 5, 6, 7, 8, 9, 10, 'A'];
+  let html = '<table class="chart evmap"><tr><th></th>' + ups.map(u => `<th>${u}</th>`).join('') + '</tr>';
+  for (const row of chartRows()) {
+    html += `<tr><th>${row.label}</th>`;
+    for (const u of ups) {
+      const uv = u === 'A' ? 11 : u, evs = cellEvs(row.key, uv);
+      if (!evs) { html += '<td>…</td>'; continue; }
+      const best = bestAction(evs), ev = evs[best];
+      const tip = `${row.label} 对 ${u}: ` + Object.keys(evs).sort((a, b) => evs[b] - evs[a]).map(k => `${ACTION_NAME[k]} ${fmtEv(evs[k])}`).join(' · ');
+      const hl = highlight && highlight.key === row.key && highlight.up === uv ? ' class="hl"' : '';
+      html += `<td${hl} style="background:${evColor(ev)}" title="${tip}">${ev >= 0 ? '+' : '−'}${Math.abs(ev).toFixed(2).replace(/^0/, '')}</td>`;
+    }
+    html += '</tr>';
+  }
+  return html + '</table><div class="evlegend"><span>−0.8 庄家</span><div class="bar"></div><span>玩家 +0.8</span></div>';
+}
+function currentCellKey() {   // the chart cell of the hand being played, for highlighting
+  if (phase !== 'play') return null;
+  const h = hands[active], o = handOptions(h), { total, soft } = handTotal(h.cards);
+  let key;
+  if (isPair(h.cards) && o.canSplit) key = 'pair:' + cardValue(h.cards[0]);
+  else if (soft && total <= 20) key = 'soft:' + total;
+  else key = 'hard:' + Math.min(17, Math.max(8, total));
+  return { key, up: cardValue(dealer[0]) };
+}
+function renderEvChart() {
+  const wrap = $('evchart-wrap');
+  if (wrap.classList.contains('hidden')) return;
+  const hl = currentCellKey();
+  if ($('ev-basis').value === 'now') {
+    const counts = unseenCounts();
+    const an = counts ? makeAnalyzer(probsOf(counts), S) : infiniteAnalyzer();
+    const cellEvs = (rowKey, uv) => {
+      const row = chartRows().find(r => r.key === rowKey);
+      const { total, soft } = handTotal(row.cards);
+      const v0 = cardValue(row.cards[0]), pairVal = rowKey.startsWith('pair') ? (v0 === 11 ? 1 : v0) : 0;
+      return an.actions(total, soft, pairVal, uv === 11 ? 1 : uv, { canDouble: true, canSplit: !!pairVal, canSurrender: S.surrender });
+    };
+    $('evchart').innerHTML = evChartHtml(cellEvs, hl) + '<p class="small" style="margin:4px 0 0">按尚未见到的牌有放回抽取的估计值。随着计数上升，看它逐渐变绿。</p>';
+    return;
+  }
+  computeChartEvs(cells => { if (!wrap.classList.contains('hidden') && $('ev-basis').value === 'fresh') $('evchart').innerHTML = evChartHtml((k, uv) => cells.get(k + '|' + uv).evs, currentCellKey()); });
+  if (!chartEvCache.cells) $('evchart').innerHTML = `<p class="small">正在计算精确值… ${chartEvCache.progress || ''}</p>`;
+}
+$('toggle-evchart').onclick = () => {
+  const w = $('evchart-wrap'); w.classList.toggle('hidden');
+  $('toggle-evchart').textContent = w.classList.contains('hidden') ? '显示' : '隐藏';
+  renderEvChart();
+};
+$('ev-basis').onchange = renderEvChart;
+function renderFacts() {
+  // simulation table
+  const label = { basic: '基本策略', hilo: 'Hi-Lo 算牌者', acefive: 'Ace-Five 算牌者', perfect: '记住每一张牌' };
+  const plays = { basic: '策略表', hilo: '策略表 + Illustrious 18 / Fab 4', acefive: '策略表', perfect: '按剩余牌计算的精确期望值' };
+  let html = '<table class="chart"><tr><th>玩家</th><th>打法依据</th><th>下注</th><th>下注金额优势</th><th>每轮胜率</th><th>平均注额</th></tr>';
+  let last = '';
+  for (const r of SIM_RESULTS) {
+    const bg = x => `style="background:${evColor(x / 2.5)};color:var(--text)"`;   // ±2% edge spans the scale
+    html += `<tr><td class="H" style="text-align:left">${r.mode === last ? '' : label[r.mode]}</td><td class="H" style="text-align:left">${r.mode === last ? '' : plays[r.mode]}</td><td class="H" style="text-align:left">${r.scheme}</td>`
+      + `<td ${bg(r.edge)}>${r.edge >= 0 ? '+' : '−'}${Math.abs(r.edge).toFixed(2)}% ± ${r.edgeSe.toFixed(2)}</td><td ${bg(r.perRound)}>${r.perRound >= 0 ? '+' : '−'}${Math.abs(r.perRound).toFixed(2)}%</td><td class="H">${r.avgBet.toFixed(2)}</td></tr>`;
+    last = r.mode;
+  }
+  $('facts-sim').innerHTML = SIM_RESULTS.length ? html + '</table>' : '<p class="small">未嵌入模拟结果。</p>';
+  $('facts-sim-note').textContent = SIM_NOTE;
+
+  // superpower table
+  const powerName = { next: '看到下一张牌', hole: '看到庄家暗牌', both: '两者都看到' };
+  const seatName = r => r.seats === 1 ? '单挑庄家' : `${r.seats} 人桌第 ${r.seat + 1} 座` + (r.seat === 0 ? '（首位）' : r.seat === r.seats - 1 ? '（末位）' : '（中间）');
+  html = '<table class="chart"><tr><th>超能力</th><th>座位</th><th>下注</th><th>下注金额优势</th><th>每轮胜率</th><th>偏离基本策略</th></tr>';
+  html += `<tr><td class="H" style="text-align:left">无，基本策略</td><td class="H">任意</td><td class="H">固定</td><td style="background:${evColor(-0.3 / 2.5)};color:var(--text)">−0.30%</td><td style="background:${evColor(-0.3 / 2.5)};color:var(--text)">−0.30%</td><td class="H">0%</td></tr>`;
+  const order = { next: 0, hole: 1, both: 2 };
+  const spRows = SP_RESULTS.slice().sort((x, y) => (x.firstbet - y.firstbet) || (order[x.power] - order[y.power]) || (x.seats - y.seats) || (x.seat - y.seat));
+  for (const r of spRows) {
+    const bg = x => `style="background:${evColor(x / 80)};color:var(--text)"`;   // ±64% spans the scale
+    html += `<tr><td class="H" style="text-align:left">${powerName[r.power]}</td><td class="H">${seatName(r)}</td><td class="H">${r.firstbet ? '首张牌是 A 或 10 时下 8 单位，否则 1' : '固定'}</td>`
+      + `<td ${bg(r.edge)}>+${r.edge.toFixed(1)}% ± ${r.se.toFixed(2)}</td><td ${bg(Math.min(r.perRound, 64))}>+${r.perRound.toFixed(1)}%</td><td class="H">${r.differs.toFixed(0)}%</td></tr>`;
+  }
+  $('facts-sp').innerHTML = html + '</table>';
+  const deltas = [...new Set(SP_DISGUISED.map(r => r.delta))].sort((a, b) => a - b);
+  html = '<table class="chart"><tr><th>超能力</th>' + deltas.map(d => `<th>δ = ${d.toFixed(2)}</th>`).join('') + '<th>不伪装</th></tr>';
+  const full = { next: 42.8, hole: 14.6, both: 62.3 };
+  for (const pw of ['next', 'hole', 'both']) {
+    html += `<tr><th style="text-align:left">${powerName[pw]}</th>`;
+    for (const d of deltas) { const r = SP_DISGUISED.find(x => x.power === pw && x.delta === d); html += `<td style="background:${evColor(r.edge / 80)};color:var(--text)">+${r.edge.toFixed(1)}%<br><span class="small">${r.differs.toFixed(0)}% 偏离</span></td>`; }
+    html += `<td style="background:${evColor(full[pw] / 80)};color:var(--text)">+${full[pw].toFixed(1)}%</td></tr>`;
+  }
+  $('facts-spd').innerHTML = html + '</table><p class="small" style="margin:6px 0 0">下注金额优势，以及偏离策略表的决策比例。作为对比，注额跨度 1–8 的 Hi-Lo 算牌者约赚 +0.7%。</p>';
+
+  // edge by true count
+  html = '<table class="chart"><tr><th>真数</th>' + [-3, -2, -1, 0, 1, 2, 3, 4, 5, 6].map(t => `<th>${t > 0 ? '+' : ''}${t}</th>`).join('') + '</tr><tr><th>你的优势</th>';
+  for (const t of [-3, -2, -1, 0, 1, 2, 3, 4, 5, 6]) {
+    const e = makeAnalyzer(compositionForTc(t), S).roundEV();
+    html += `<td style="background:${evColor(e * 40)};color:var(--text)">${fmtPct(e)}</td>`;
+  }
+  $('facts-tc').innerHTML = html + '</tr></table>';
+
+  // edge by Ace-Five count at three depths: a count of +k means k more fives than aces have left the shoe
+  if (S.decks === 0) { $('facts-af').innerHTML = ''; $('facts-af-note').textContent = '不适用于无限牌靴。'; }
+  else {
+    const afCounts = [-4, -2, 0, 2, 4, 6, 8];
+    html = '<table class="chart"><tr><th>剩余副数</th>' + afCounts.map(k => `<th>${k > 0 ? '+' : ''}${k}</th>`).join('') + '</tr>';
+    for (const frac of [2 / 3, 1 / 2, 1 / 3]) {
+      const R = S.decks * frac;
+      html += `<tr><th>${S.decks} 副剩 ${+R.toFixed(1)}</th>`;
+      for (const k of afCounts) {
+        const cnt = new Array(11).fill(0);
+        for (let v = 1; v <= 10; v++) cnt[v] = (v === 10 ? 16 : 4) * R;
+        cnt[5] -= k / 2; cnt[1] += k / 2;
+        if (cnt[5] < 0 || cnt[1] < 0) { html += '<td class="H">–</td>'; continue; }
+        const e = makeAnalyzer(probsOf(cnt), S).roundEV();
+        html += `<td style="background:${evColor(e * 40)};color:var(--text)">${fmtPct(e)}</td>`;
+      }
+      html += '</tr>';
+    }
+    $('facts-af').innerHTML = html + '</table>';
+    $('facts-af-note').textContent = '计数 +k 表示离开牌靴的 5 比 A 多 k 张，其余点数都在平均水平。同样的计数在牌靴越深处价值越高，因为多出来的 A 集中在更少的牌里，这就是 Ace-Five 的下注规则（+2 或以上加倍）是把钝刀的原因：早期值不了多少，后期却很值钱。对比 Hi-Lo 表：真数已经除以了剩余副数。';
+  }
+
+  // effect of removal, fixed rules; removal that hurts the player means the card was a friend, so colour by the negative
+  const hiloTag = { A: -1, 10: -1, 9: 0, 8: 0, 7: 0, 6: 1, 5: 1, 4: 1, 3: 1, 2: 1 };
+  html = '<table class="chart"><tr><th>牌</th><th>从 6 副中移走一张</th><th>折算到一副</th><th>Hi-Lo</th><th>Ace-Five</th></tr>';
+  for (const [card, d] of EOR_RESULTS) {
+    const sign = (v, dp) => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(dp);
+    html += `<tr><th>${card}</th><td style="background:${evColor(-d * 6)};color:var(--text)">${sign(d, 3)}%</td><td style="background:${evColor(-d * 6)};color:var(--text)">${sign(d * 6, 2)}%</td><td class="H">${sign(hiloTag[card], 0)}</td><td class="H">${card === 'A' ? '−1' : card === '5' ? '+1' : '0'}</td></tr>`;
+  }
+  $('facts-eor').innerHTML = html + '</table>';
+
+  // dealer outcomes
+  const an = infiniteAnalyzer();
+  html = '<table class="chart"><tr><th>明牌</th>' + [2, 3, 4, 5, 6, 7, 8, 9, 10, 'A'].map(u => `<th>${u}</th>`).join('') + '</tr>';
+  const rows = [['爆牌', 5], ['17', 0], ['18', 1], ['19', 2], ['20', 3], ['21', 4]];
+  for (const [name, i] of rows) {
+    html += `<tr><th>${name}</th>`;
+    for (const u of [2, 3, 4, 5, 6, 7, 8, 9, 10, 1]) { const v = an.dealerDist(u)[i]; html += `<td class="${name === '爆牌' ? (v > 0.3 ? 'D' : 'R') : 'H'}">${(100 * v).toFixed(0)}%</td>`; }
+    html += '</tr>';
+  }
+  $('facts-dealer').innerHTML = html + '</table>';
+
+  // odds and ends (infinite-shoe arithmetic, fresh shoe)
+  const pBJ = 2 * (1 / 13) * (4 / 13);
+  const pDealerBJgivenAce = 4 / 13;
+  $('facts-misc').innerHTML = [
+    `天生黑杰克大约每 ${Math.round(1 / pBJ)} 手出现一次（${(100 * pBJ).toFixed(1)}%）。你和庄家拿到的频率相同；你的黑杰克按 3:2 赔付约值 2.3%，而 6:5 把其中大部分还给了赌场。`,
+    `庄家明牌为 A 时，新牌靴下有 ${(100 * pDealerBJgivenAce).toFixed(1)}% 的概率是黑杰克。保险赔 2:1，但公平赔率是 9:4，所以在 10 点牌超过未见牌的三分之一之前（即 Hi-Lo 真数 +3），保险每注亏 ${(100 * (1 - 3 * pDealerBJgivenAce) / 2).toFixed(1)}%。`,
+    `移走一张牌对优势的影响每副最多约 0.9%；5 是影响最大的牌，A 是对你最有利的牌。${S.decks === 0 ? '对无限牌靴，任何单张牌都无关紧要' : '对 ' + S.decks + ' 副牌，一张 5 离开牌靴让你多赚约 ' + (0.86 / S.decks).toFixed(2) + '%，一张 A 离开则让你少赚约 ' + (0.56 / S.decks).toFixed(2) + '%'}。左侧表格列出了每个点数。`,
+    `庄家总体约 28% 的时候爆牌，而你按基本策略约 16% 爆牌。庄家赢的手数仍然比你多，因为双方都爆时输的是你：你必须先行动。`,
+  ].map(t => `<p style="margin:0 0 8px">${t}</p>`).join('');
+
+  // EV chart and closest calls share one exact computation per rule set
+  const key = JSON.stringify([S.decks, S.h17, S.das, S.surrender]);
+  if (!chartEvCache.cells || chartEvCache.key !== key) {
+    $('facts-evchart').innerHTML = `<p class="small">正在计算精确值… ${chartEvCache.progress || ''}</p>`;
+    $('facts-close').textContent = '计算中…';
+  }
+  $('facts-tc-exact').textContent = S.decks === 0 ? '对无限牌靴，这些数值是精确的。' : '这些格子是把牌靴当作无限的快速估计，会把赌场优势高估约 0.1 个百分点；真实发牌下的新牌靴数值正在计算…';
+  computeFreshEdge(exact => {
+    if ($('tab-facts').classList.contains('hidden') || S.decks === 0) return;
+    const est = makeAnalyzer(UNIFORM_P, S).roundEV();
+    $('facts-tc-exact').textContent = `这些格子是把牌靴当作无限的快速估计。计数为 0 时估计值为 ${fmtPct(est)}；按真实的 ${S.decks} 副发牌，当前规则下的新牌靴优势为 ${fmtPct(exact)}，所以两张计数表都应读高约 ${(100 * (exact - est)).toFixed(2)} 个百分点。该数值的分牌不含再分牌，再分牌还能多值百分之零点零几；上方模拟表允许再分牌且发的是真实牌靴，所以其基本策略行还要略好一些。`;
+  });
+  computeChartEvs(cells => {
+    if ($('tab-facts').classList.contains('hidden')) return;
+    $('facts-evchart').innerHTML = evChartHtml((k, uv) => cells.get(k + '|' + uv).evs, null);
+    const gaps = [];
+    for (const c of cells.values()) {
+      const order = Object.keys(c.evs).sort((a, b) => c.evs[b] - c.evs[a]);
+      gaps.push({ label: c.label, a: order[0], b: order[1], gap: c.evs[order[0]] - c.evs[order[1]] });
+    }
+    gaps.sort((x, y) => x.gap - y.gap);
+    let h = '<table class="chart"><tr><th>手牌</th><th>最佳</th><th>次佳</th><th>差距</th></tr>';
+    for (const g of gaps.slice(0, 10)) h += `<tr><td class="H">${g.label}</td><td class="${g.a}">${ACTION_NAME[g.a]}</td><td class="${g.b}">${ACTION_NAME[g.b]}</td><td class="H">${g.gap.toFixed(4)}</td></tr>`;
+    $('facts-close').innerHTML = h + '</table>';
+  });
+}
+
+// ---------------------------------------------------------------- tabs & keys
+function showTab(name) {
+  for (const t of ['play', 'drill', 'count', 'facts', 'settings']) $('tab-' + t).classList.toggle('hidden', t !== name);
+  if (name === 'facts') renderFacts();
+  document.querySelectorAll('.tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === name));
+}
+document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => showTab(b.dataset.tab));
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.metaKey || e.ctrlKey) return;
+  const k = e.key.toLowerCase();
+  if (!$('tab-play').classList.contains('hidden')) {
+    if (phase === 'play' && 'hsdpr'.includes(k)) act(k.toUpperCase());
+    else if ((phase === 'bet' || phase === 'done') && (k === 'enter' || k === 'n' || k === ' ')) { e.preventDefault(); (phase === 'bet' ? $('deal') : $('next-hand')).click(); }
+    else if (phase === 'insurance' && (k === 'y' || k === 'n')) decideInsurance(k === 'y');
+  } else if (!$('tab-drill').classList.contains('hidden')) {
+    if ('hsdpr'.includes(k)) drillAnswer(k.toUpperCase());
+    else if (k === 'n' || k === 'enter' || k === ' ') { e.preventDefault(); drillNext(); }
+  }
+});
+
+// ---------------------------------------------------------------- init
+settingsToForm();
+$('bet').value = S.minBet;
+renderChart(); render(); renderDrillStats(); renderCdStats();
+</script>
+</body>
+</html>
