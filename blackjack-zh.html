@@ -63,6 +63,8 @@ label { display: inline-flex; align-items: center; gap: 6px; }
 .infobar { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 8px; font-size: 13px; }
 .actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
 .betrow { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 10px 0; }
+/* Casino chip: dashed white border gives the edge spots, the inset ring the printed centre. */
+.chip { width: 46px; height: 46px; padding: 0; border-radius: 50%; background: var(--chip); color: var(--chip-text, #fff); border: 4px dashed rgba(255,255,255,.85); box-shadow: inset 0 0 0 2px rgba(255,255,255,.6), 0 1px 3px rgba(0,0,0,.4); font-weight: 700; font-size: 13px; line-height: 1; }
 .msg { min-height: 48px; padding: 10px 12px; border-radius: 8px; background: var(--panel); border: 1px solid var(--border); white-space: pre-line; }
 .msg.good { border-color: var(--good); } .msg.bad { border-color: var(--bad); }
 .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 12px; margin-bottom: 12px; }
@@ -128,7 +130,8 @@ label { display: inline-flex; align-items: center; gap: 6px; }
 
     <div class="betrow" id="bet-row">
       <label>下注 <input type="number" id="bet" min="1" step="1"></label>
-      <button data-mult="1">最小注</button><button data-mult="2">×2</button><button data-mult="4">×4</button><button data-mult="8">×8</button><button data-mult="16">×16</button>
+      <span id="bet-mults"><button data-mult="1">最小注</button><button data-mult="2">×2</button><button data-mult="4">×4</button><button data-mult="8">×8</button><button data-mult="16">×16</button></span>
+      <span id="bet-chips" class="hidden"><button class="chip" data-chip="1" style="--chip:#f3f0ea;--chip-text:#1c1c1c">1</button> <button class="chip" data-chip="5" style="--chip:#c62f2a">5</button> <button class="chip" data-chip="25" style="--chip:#2e8b57">25</button> <button class="chip" data-chip="100" style="--chip:#222">100</button> <button class="chip" data-chip="500" style="--chip:#6a3d9a">500</button> <button id="bet-clear">清空</button></span>
       <button id="bet-suggest">按提示下注</button>
       <span id="bet-hint" class="small"></span>
       <button class="primary" id="deal">发牌</button>
@@ -484,6 +487,7 @@ label { display: inline-flex; align-items: center; gap: 6px; }
     <div class="row">
       <label>最小注 <input type="number" id="s-min" min="1" step="1"></label>
       <label>资金 <input type="number" id="s-bank" min="1" step="1"></label>
+      <label>下注按钮 <select id="s-betstyle"><option value="mult">最小注的倍数</option><option value="chips">赌场筹码</option></select></label>
       <button id="s-bank-reset">重置资金</button>
     </div>
   </div>
@@ -888,7 +892,7 @@ const DEFAULTS = {
   decks: 6, h17: false, das: true, surrender: true, resplitAces: false, bjPays: 1.5,
   penetration: 0.75, showCount: false, hints: false, quizEvery: 5, deviations: false,
   system: 'hilo', evMode: 'after', showEdge: true, adaptive: true,
-  minBet: 10, bankroll: 1000,
+  minBet: 10, bankroll: 1000, betStyle: 'mult',
 };
 const countingOn = () => S.decks !== 0;
 const hasHiLo = () => countingOn() && S.system !== 'acefive';
@@ -1323,6 +1327,8 @@ function render() {
   $('next-row').classList.toggle('hidden', phase !== 'done');
   $('bet-hint').textContent = S.hints && phase === 'bet' ? betHint() : '';
   $('bet-suggest').classList.toggle('hidden', !(S.hints && countingOn()));
+  $('bet-mults').classList.toggle('hidden', S.betStyle === 'chips');
+  $('bet-chips').classList.toggle('hidden', S.betStyle !== 'chips');
 
   if (phase === 'play') {
     const o = handOptions(hands[active]);
@@ -1434,6 +1440,8 @@ $('change-bet').onclick = () => { phase = 'bet'; render(); };
 // Bets are in units of the minimum bet, like the hints and the ramps, so the buttons are multipliers, not chips.
 document.querySelectorAll('#bet-row [data-mult]').forEach(b => b.onclick = () => { $('bet').value = S.minBet * +b.dataset.mult; });
 $('bet-suggest').onclick = () => { $('bet').value = hasHiLo() ? suggestedBet() : aceFiveBet(); };
+document.querySelectorAll('#bet-row [data-chip]').forEach(b => b.onclick = () => { $('bet').value = (+$('bet').value || 0) + +b.dataset.chip; });
+$('bet-clear').onclick = () => { $('bet').value = 0; };
 document.querySelectorAll('#action-row button').forEach(b => b.onclick = () => act(b.dataset.act));
 document.querySelectorAll('#insurance-row button').forEach(b => b.onclick = () => decideInsurance(b.dataset.ins === '1'));
 $('reset-stats').onclick = () => { stats = Object.assign({}, STATS0); save('bj.stats', stats); render(); };
@@ -1662,6 +1670,7 @@ function settingsToForm() {
   $('s-pen').value = S.penetration; $('s-showcount').checked = S.showCount; $('s-hint').checked = S.hints;
   $('s-quiz').value = S.quizEvery; $('s-dev').checked = S.deviations; $('s-min').value = S.minBet; $('s-bank').value = S.bankroll;
   $('s-system').value = S.system; $('s-ev').value = S.evMode; $('s-edge').checked = S.showEdge; $('s-adaptive').checked = S.adaptive;
+  $('s-betstyle').value = S.betStyle;
 }
 $('s-apply').onclick = () => {
   S = {
@@ -1672,6 +1681,7 @@ $('s-apply').onclick = () => {
     quizEvery: Math.max(0, Math.floor(+$('s-quiz').value || 0)), deviations: $('s-dev').checked,
     system: $('s-system').value, evMode: $('s-ev').value, showEdge: $('s-edge').checked, adaptive: $('s-adaptive').checked,
     minBet: Math.max(1, Math.floor(+$('s-min').value || 10)), bankroll: Math.max(1, Math.floor(+$('s-bank').value || 1000)),
+    betStyle: $('s-betstyle').value,
   };
   save('bj.settings', S);
   needShuffle = true; hands = []; dealer = []; phase = 'bet';
