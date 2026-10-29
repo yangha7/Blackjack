@@ -61,6 +61,8 @@ const PAIRS = [
   ['<button data-mult="1">Min</button>', '<button data-mult="1">最小注</button>'],
   ['<button id="bet-suggest">Use hint</button>', '<button id="bet-suggest">按提示下注</button>'],
   ['<button id="bet-clear">Clear</button>', '<button id="bet-clear">清空</button>'],
+  ['<label><input type="checkbox" id="p-quiz"> Count quiz</label>', '<label><input type="checkbox" id="p-quiz"> 算牌测验</label>'],
+  ['<label>Bet buttons <select id="p-betstyle"><option value="mult">multipliers</option><option value="chips">chips</option></select></label>', '<label>下注按钮 <select id="p-betstyle"><option value="mult">倍数</option><option value="chips">筹码</option></select></label>'],
   ['<label>Bet buttons <select id="s-betstyle"><option value="mult">multiples of the minimum</option><option value="chips">casino chips</option></select></label>', '<label>下注按钮 <select id="s-betstyle"><option value="mult">最小注的倍数</option><option value="chips">赌场筹码</option></select></label>'],
   ['<button class="primary" id="deal">Deal</button>', '<button class="primary" id="deal">发牌</button>'],
   ['<button data-act="H">Hit</button>', '<button data-act="H">要牌</button>'],

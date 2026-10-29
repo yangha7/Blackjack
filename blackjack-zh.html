@@ -63,6 +63,7 @@ label { display: inline-flex; align-items: center; gap: 6px; }
 .infobar { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 8px; font-size: 13px; }
 .actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
 .betrow { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 10px 0; }
+.playopts { display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: center; margin: 8px 0; color: var(--muted); }
 /* Casino chip: dashed white border gives the edge spots, the inset ring the printed centre. */
 .chip { width: 46px; height: 46px; padding: 0; border-radius: 50%; background: var(--chip); color: var(--chip-text, #fff); border: 4px dashed rgba(255,255,255,.85); box-shadow: inset 0 0 0 2px rgba(255,255,255,.6), 0 1px 3px rgba(0,0,0,.4); font-weight: 700; font-size: 13px; line-height: 1; }
 .msg { min-height: 48px; padding: 10px 12px; border-radius: 8px; background: var(--panel); border: 1px solid var(--border); white-space: pre-line; }
@@ -155,6 +156,10 @@ label { display: inline-flex; align-items: center; gap: 6px; }
     </div>
 
     <div class="msg" id="msg">设定注额后按“发牌”。</div>
+    <div class="playopts small">
+      <label><input type="checkbox" id="p-quiz"> 算牌测验</label>
+      <label>下注按钮 <select id="p-betstyle"><option value="mult">倍数</option><option value="chips">筹码</option></select></label>
+    </div>
   </div>
 
   <aside>
@@ -892,7 +897,7 @@ const DEFAULTS = {
   decks: 6, h17: false, das: true, surrender: true, resplitAces: false, bjPays: 1.5,
   penetration: 0.75, showCount: false, hints: false, quizEvery: 5, deviations: false,
   system: 'hilo', evMode: 'after', showEdge: true, adaptive: true,
-  minBet: 10, bankroll: 1000, betStyle: 'mult',
+  minBet: 10, bankroll: 1000, betStyle: 'mult', quiz: true,
 };
 const countingOn = () => S.decks !== 0;
 const hasHiLo = () => countingOn() && S.system !== 'acefive';
@@ -1184,7 +1189,7 @@ function settle() {
 }
 
 function quizDue() {
-  return countingOn() && S.quizEvery > 0 && stats.hands > 0 && stats.hands % S.quizEvery === 0 && lastQuizAt !== stats.hands && !needShuffle;
+  return S.quiz && countingOn() && S.quizEvery > 0 && stats.hands > 0 && stats.hands % S.quizEvery === 0 && lastQuizAt !== stats.hands && !needShuffle;
 }
 function showQuiz() {
   lastQuizAt = stats.hands;
@@ -1671,7 +1676,11 @@ function settingsToForm() {
   $('s-quiz').value = S.quizEvery; $('s-dev').checked = S.deviations; $('s-min').value = S.minBet; $('s-bank').value = S.bankroll;
   $('s-system').value = S.system; $('s-ev').value = S.evMode; $('s-edge').checked = S.showEdge; $('s-adaptive').checked = S.adaptive;
   $('s-betstyle').value = S.betStyle;
+  $('p-betstyle').value = S.betStyle; $('p-quiz').checked = S.quiz;
 }
+// The same two choices sit on the Play tab so they can be flipped mid-session without a reshuffle.
+$('p-betstyle').onchange = () => { S.betStyle = $('p-betstyle').value; $('s-betstyle').value = S.betStyle; save('bj.settings', S); render(); };
+$('p-quiz').onchange = () => { S.quiz = $('p-quiz').checked; save('bj.settings', S); };
 $('s-apply').onclick = () => {
   S = {
     decks: +$('s-decks').value, h17: $('s-h17').value === '1', bjPays: +$('s-bj').value,
@@ -1681,7 +1690,7 @@ $('s-apply').onclick = () => {
     quizEvery: Math.max(0, Math.floor(+$('s-quiz').value || 0)), deviations: $('s-dev').checked,
     system: $('s-system').value, evMode: $('s-ev').value, showEdge: $('s-edge').checked, adaptive: $('s-adaptive').checked,
     minBet: Math.max(1, Math.floor(+$('s-min').value || 10)), bankroll: Math.max(1, Math.floor(+$('s-bank').value || 1000)),
-    betStyle: $('s-betstyle').value,
+    betStyle: $('s-betstyle').value, quiz: S.quiz,
   };
   save('bj.settings', S);
   needShuffle = true; hands = []; dealer = []; phase = 'bet';
