@@ -129,6 +129,9 @@ label { display: inline-flex; align-items: center; gap: 6px; }
       </div>
     </div>
 
+    <div class="actions hidden" id="next-row">
+      <button class="primary" id="next-hand">Next hand (same bet)</button>
+    </div>
     <div class="betrow" id="bet-row">
       <label>Bet <input type="number" id="bet" min="1" step="1"></label>
       <span id="bet-mults"><button data-mult="1">Min</button><button data-mult="2">×2</button><button data-mult="4">×4</button><button data-mult="8">×8</button><button data-mult="16">×16</button></span>
@@ -149,10 +152,6 @@ label { display: inline-flex; align-items: center; gap: 6px; }
       <span>Insurance?</span>
       <button data-ins="1">Take</button>
       <button data-ins="0">Decline</button>
-    </div>
-    <div class="actions hidden" id="next-row">
-      <button class="primary" id="next-hand">Next hand (same bet)</button>
-      <button id="change-bet">Change bet</button>
     </div>
 
     <div class="msg" id="msg">Set a bet and press Deal.</div>
@@ -1326,11 +1325,11 @@ function render() {
   $('edge-info').textContent = edge === null ? '' : `Your edge next hand: ${S.decks === 0 ? '' : '≈ '}${fmtPct(edge)}`;
   $('bankroll-info').textContent = `Bankroll: ${bankroll}`;
 
-  $('bet-row').classList.toggle('hidden', phase !== 'bet');
+  $('bet-row').classList.toggle('hidden', phase !== 'bet' && phase !== 'done');
   $('action-row').classList.toggle('hidden', phase !== 'play');
   $('insurance-row').classList.toggle('hidden', phase !== 'insurance');
   $('next-row').classList.toggle('hidden', phase !== 'done');
-  $('bet-hint').textContent = S.hints && phase === 'bet' ? betHint() : '';
+  $('bet-hint').textContent = S.hints && (phase === 'bet' || phase === 'done') ? betHint() : '';
   $('bet-suggest').classList.toggle('hidden', !(S.hints && countingOn()));
   $('bet-mults').classList.toggle('hidden', S.betStyle === 'chips');
   $('bet-chips').classList.toggle('hidden', S.betStyle !== 'chips');
@@ -1439,9 +1438,8 @@ function renderChartHighlight() {
 }
 
 // ---------------------------------------------------------------- play wiring
-$('deal').onclick = () => { if (phase !== 'bet') return; if (quizDue()) showQuiz(); else startHand(); };
+$('deal').onclick = () => { if (phase !== 'bet' && phase !== 'done') return; phase = 'bet'; if (quizDue()) showQuiz(); else startHand(); };
 $('next-hand').onclick = () => { phase = 'bet'; $('bet').value = bet; $('deal').click(); };
-$('change-bet').onclick = () => { phase = 'bet'; render(); };
 // Bets are in units of the minimum bet, like the hints and the ramps, so the buttons are multipliers, not chips.
 document.querySelectorAll('#bet-row [data-mult]').forEach(b => b.onclick = () => { $('bet').value = S.minBet * +b.dataset.mult; });
 $('bet-suggest').onclick = () => { $('bet').value = hasHiLo() ? suggestedBet() : aceFiveBet(); };

@@ -74,7 +74,6 @@ const PAIRS = [
   ['<button data-ins="1">Take</button>', '<button data-ins="1">买</button>'],
   ['<button data-ins="0">Decline</button>', '<button data-ins="0">不买</button>'],
   ['Next hand (same bet)', '下一手（同样注额）'],
-  ['<button id="change-bet">Change bet</button>', '<button id="change-bet">更改注额</button>'],
   ['Set a bet and press Deal.', '设定注额后按“发牌”。'],
   ['<h3>Session</h3>', '<h3>本局统计</h3>'],
   ['<span>Hands</span>', '<span>手数</span>'],
