@@ -1,0 +1,46 @@
+[
+ {
+  "mode": "acefive",
+  "scheme": "flat 1 unit",
+  "edge": -0.352,
+  "edgeSe": 0.036,
+  "perRound": -0.352,
+  "perRoundSe": 0.036,
+  "avgBet": 1,
+  "sd": 1.14,
+  "rounds": 10000000
+ },
+ {
+  "mode": "acefive",
+  "scheme": "spread 1–4",
+  "edge": 0.013,
+  "edgeSe": 0.044,
+  "perRound": 0.023,
+  "perRoundSe": 0.079,
+  "avgBet": 1.78,
+  "sd": 2.5,
+  "rounds": 10000000
+ },
+ {
+  "mode": "acefive",
+  "scheme": "spread 1–8",
+  "edge": 0.183,
+  "edgeSe": 0.053,
+  "perRound": 0.484,
+  "perRoundSe": 0.141,
+  "avgBet": 2.65,
+  "sd": 4.46,
+  "rounds": 10000000
+ },
+ {
+  "mode": "acefive",
+  "scheme": "spread 1–16",
+  "edge": 0.321,
+  "edgeSe": 0.062,
+  "perRound": 1.356,
+  "perRoundSe": 0.262,
+  "avgBet": 4.22,
+  "sd": 8.29,
+  "rounds": 10000000
+ }
+]

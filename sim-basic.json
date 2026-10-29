@@ -1,0 +1,13 @@
+[
+ {
+  "mode": "basic",
+  "scheme": "flat 1 unit",
+  "edge": -0.298,
+  "edgeSe": 0.036,
+  "perRound": -0.298,
+  "perRoundSe": 0.036,
+  "avgBet": 1,
+  "sd": 1.14,
+  "rounds": 10000000
+ }
+]

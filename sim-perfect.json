@@ -1,0 +1,57 @@
+[
+ {
+  "mode": "perfect",
+  "scheme": "flat 1 unit",
+  "edge": -0.079,
+  "edgeSe": 0.066,
+  "perRound": -0.079,
+  "perRoundSe": 0.066,
+  "avgBet": 1,
+  "sd": 1.14,
+  "rounds": 3000000
+ },
+ {
+  "mode": "perfect",
+  "scheme": "spread 1–4",
+  "edge": 0.685,
+  "edgeSe": 0.08,
+  "perRound": 0.971,
+  "perRoundSe": 0.113,
+  "avgBet": 1.42,
+  "sd": 1.96,
+  "rounds": 3000000
+ },
+ {
+  "mode": "perfect",
+  "scheme": "spread 1–8",
+  "edge": 1.203,
+  "edgeSe": 0.097,
+  "perRound": 2.506,
+  "perRoundSe": 0.203,
+  "avgBet": 2.08,
+  "sd": 3.51,
+  "rounds": 3000000
+ },
+ {
+  "mode": "perfect",
+  "scheme": "spread 1–16",
+  "edge": 1.616,
+  "edgeSe": 0.114,
+  "perRound": 5.57,
+  "perRoundSe": 0.393,
+  "avgBet": 3.45,
+  "sd": 6.81,
+  "rounds": 3000000
+ },
+ {
+  "mode": "perfect",
+  "scheme": "spread 1–8, sit out when edge < 0",
+  "edge": 2.203,
+  "edgeSe": 0.139,
+  "perRound": 3.087,
+  "perRoundSe": 0.195,
+  "avgBet": 1.4,
+  "sd": 3.38,
+  "rounds": 3000000
+ }
+]
