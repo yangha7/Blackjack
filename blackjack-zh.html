@@ -128,8 +128,8 @@ label { display: inline-flex; align-items: center; gap: 6px; }
 
     <div class="betrow" id="bet-row">
       <label>下注 <input type="number" id="bet" min="1" step="1"></label>
-      <button data-chip="5">+5</button><button data-chip="25">+25</button><button data-chip="100">+100</button>
-      <button id="bet-min">最小注</button>
+      <button data-mult="1">最小注</button><button data-mult="2">×2</button><button data-mult="4">×4</button><button data-mult="8">×8</button><button data-mult="16">×16</button>
+      <button id="bet-suggest">按提示下注</button>
       <span id="bet-hint" class="small"></span>
       <button class="primary" id="deal">发牌</button>
     </div>
@@ -1322,6 +1322,7 @@ function render() {
   $('insurance-row').classList.toggle('hidden', phase !== 'insurance');
   $('next-row').classList.toggle('hidden', phase !== 'done');
   $('bet-hint').textContent = S.hints && phase === 'bet' ? betHint() : '';
+  $('bet-suggest').classList.toggle('hidden', !(S.hints && countingOn()));
 
   if (phase === 'play') {
     const o = handOptions(hands[active]);
@@ -1430,8 +1431,9 @@ function renderChartHighlight() {
 $('deal').onclick = () => { if (phase !== 'bet') return; if (quizDue()) showQuiz(); else startHand(); };
 $('next-hand').onclick = () => { phase = 'bet'; $('bet').value = bet; $('deal').click(); };
 $('change-bet').onclick = () => { phase = 'bet'; render(); };
-document.querySelectorAll('#bet-row [data-chip]').forEach(b => b.onclick = () => { $('bet').value = (+$('bet').value || 0) + +b.dataset.chip; });
-$('bet-min').onclick = () => { $('bet').value = S.minBet; };
+// Bets are in units of the minimum bet, like the hints and the ramps, so the buttons are multipliers, not chips.
+document.querySelectorAll('#bet-row [data-mult]').forEach(b => b.onclick = () => { $('bet').value = S.minBet * +b.dataset.mult; });
+$('bet-suggest').onclick = () => { $('bet').value = hasHiLo() ? suggestedBet() : aceFiveBet(); };
 document.querySelectorAll('#action-row button').forEach(b => b.onclick = () => act(b.dataset.act));
 document.querySelectorAll('#insurance-row button').forEach(b => b.onclick = () => decideInsurance(b.dataset.ins === '1'));
 $('reset-stats').onclick = () => { stats = Object.assign({}, STATS0); save('bj.stats', stats); render(); };
