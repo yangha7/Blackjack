@@ -83,6 +83,8 @@ const PAIRS = [
   ['<span>Count-quiz accuracy</span>', '<span>算牌测验正确率</span>'],
   ['<span>Insurance decisions</span>', '<span>保险决策</span>'],
   ['<button id="reset-stats">Reset session</button>', '<button id="reset-stats">重置统计</button>'],
+  ['<button id="reset-shoe">New shoe + bankroll</button>', '<button id="reset-shoe">新牌靴 + 重置资金</button>'],
+  ["`New shoe${S.decks ? ', counts reset to 0' : ''}, bankroll back to ${bankroll}.`", "`新牌靴${S.decks ? '，计数归零' : ''}，资金恢复为 ${bankroll}。`"],
   ['<h3>Real-time analysis</h3>', '<h3>实时分析</h3>'],
   ['<h3>Strategy chart <button', '<h3>基本策略表 <button'],
   ['<h3>EV chart <button', '<h3>期望值表 <button'],

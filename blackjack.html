@@ -170,7 +170,7 @@ label { display: inline-flex; align-items: center; gap: 6px; }
       <div class="stat"><span>Strategy accuracy</span><b id="st-strat">–</b></div>
       <div class="stat"><span>Count-quiz accuracy</span><b id="st-quiz">–</b></div>
       <div class="stat"><span>Insurance decisions</span><b id="st-ins">–</b></div>
-      <div style="margin-top:8px"><button id="reset-stats">Reset session</button></div>
+      <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap"><button id="reset-stats">Reset session</button><button id="reset-shoe">New shoe + bankroll</button></div>
     </div>
     <div class="panel" id="ev-panel">
       <h3>Real-time analysis</h3>
@@ -1448,6 +1448,12 @@ $('bet-clear').onclick = () => { $('bet').value = 0; };
 document.querySelectorAll('#action-row button').forEach(b => b.onclick = () => act(b.dataset.act));
 document.querySelectorAll('#insurance-row button').forEach(b => b.onclick = () => decideInsurance(b.dataset.ins === '1'));
 $('reset-stats').onclick = () => { stats = Object.assign({}, STATS0); save('bj.stats', stats); render(); };
+$('reset-shoe').onclick = () => {
+  shuffle(); hands = []; dealer = []; phase = 'bet'; lastAnalysis = null;
+  bankroll = S.bankroll; save('bj.bank', { bankroll });
+  $('bet').value = S.minBet; render();
+  setMsg(`New shoe${S.decks ? ', counts reset to 0' : ''}, bankroll back to ${bankroll}.`);
+};
 $('toggle-chart').onclick = () => {
   const w = $('chart-wrap'); w.classList.toggle('hidden');
   $('toggle-chart').textContent = w.classList.contains('hidden') ? 'show' : 'hide';
