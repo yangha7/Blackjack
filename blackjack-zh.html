@@ -108,7 +108,7 @@ label { display: inline-flex; align-items: center; gap: 6px; }
     <button data-tab="settings">设置</button>
   </div>
   <a href="blackjack.html" class="small" style="margin-left:auto">English</a>
-  <span class="small" id="version" title="每次发布都会更新，便于识别浏览器缓存的旧版本">v1.8 · 2026-10-30</span>
+  <span class="small" id="version" title="每次发布都会更新，便于识别浏览器缓存的旧版本">v1.9 · 2026-10-30</span>
 </header>
 <main>
 
@@ -171,7 +171,7 @@ label { display: inline-flex; align-items: center; gap: 6px; }
       <div class="stat"><span>策略正确率</span><b id="st-strat">–</b></div>
       <div class="stat"><span>算牌测验正确率</span><b id="st-quiz">–</b></div>
       <div class="stat"><span>保险决策</span><b id="st-ins">–</b></div>
-      <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap"><button id="reset-stats">重置统计</button><button id="reset-shoe">新牌靴 + 重置资金</button></div>
+      <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap"><button id="reset-stats">重置统计</button><button id="shuffle-now">洗牌</button><button id="reset-shoe">新牌靴 + 重置资金</button></div>
     </div>
     <div class="panel" id="ev-panel">
       <h3>实时分析</h3>
@@ -1449,6 +1449,10 @@ $('bet-clear').onclick = () => { $('bet').value = 0; };
 document.querySelectorAll('#action-row button').forEach(b => b.onclick = () => act(b.dataset.act));
 document.querySelectorAll('#insurance-row button').forEach(b => b.onclick = () => decideInsurance(b.dataset.ins === '1'));
 $('reset-stats').onclick = () => { stats = Object.assign({}, STATS0); save('bj.stats', stats); render(); };
+$('shuffle-now').onclick = () => {
+  shuffle(); hands = []; dealer = []; phase = 'bet'; lastAnalysis = null; render();
+  setMsg(S.decks ? '已洗牌：新牌靴，计数归零。' : '无限牌靴：无需洗牌。');
+};
 $('reset-shoe').onclick = () => {
   shuffle(); hands = []; dealer = []; phase = 'bet'; lastAnalysis = null;
   bankroll = S.bankroll; save('bj.bank', { bankroll });

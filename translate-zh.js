@@ -84,6 +84,8 @@ const PAIRS = [
   ['<span>Insurance decisions</span>', '<span>保险决策</span>'],
   ['<button id="reset-stats">Reset session</button>', '<button id="reset-stats">重置统计</button>'],
   ['<button id="reset-shoe">New shoe + bankroll</button>', '<button id="reset-shoe">新牌靴 + 重置资金</button>'],
+  ['<button id="shuffle-now">Shuffle</button>', '<button id="shuffle-now">洗牌</button>'],
+  ["'Shuffled: new shoe, counts reset to 0.' : 'Infinite shoe: nothing to shuffle.'", "'已洗牌：新牌靴，计数归零。' : '无限牌靴：无需洗牌。'"],
   ['title="Bumped on every push, so a stale cached copy is easy to spot"', 'title="每次发布都会更新，便于识别浏览器缓存的旧版本"'],
   ["`New shoe${S.decks ? ', counts reset to 0' : ''}, bankroll back to ${bankroll}.`", "`新牌靴${S.decks ? '，计数归零' : ''}，资金恢复为 ${bankroll}。`"],
   ['<h3>Real-time analysis</h3>', '<h3>实时分析</h3>'],

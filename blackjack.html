@@ -108,7 +108,7 @@ label { display: inline-flex; align-items: center; gap: 6px; }
     <button data-tab="settings">Settings</button>
   </div>
   <a href="blackjack-zh.html" class="small" style="margin-left:auto">中文</a>
-  <span class="small" id="version" title="Bumped on every push, so a stale cached copy is easy to spot">v1.8 · 2026-10-30</span>
+  <span class="small" id="version" title="Bumped on every push, so a stale cached copy is easy to spot">v1.9 · 2026-10-30</span>
 </header>
 <main>
 
@@ -171,7 +171,7 @@ label { display: inline-flex; align-items: center; gap: 6px; }
       <div class="stat"><span>Strategy accuracy</span><b id="st-strat">–</b></div>
       <div class="stat"><span>Count-quiz accuracy</span><b id="st-quiz">–</b></div>
       <div class="stat"><span>Insurance decisions</span><b id="st-ins">–</b></div>
-      <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap"><button id="reset-stats">Reset session</button><button id="reset-shoe">New shoe + bankroll</button></div>
+      <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap"><button id="reset-stats">Reset session</button><button id="shuffle-now">Shuffle</button><button id="reset-shoe">New shoe + bankroll</button></div>
     </div>
     <div class="panel" id="ev-panel">
       <h3>Real-time analysis</h3>
@@ -1449,6 +1449,10 @@ $('bet-clear').onclick = () => { $('bet').value = 0; };
 document.querySelectorAll('#action-row button').forEach(b => b.onclick = () => act(b.dataset.act));
 document.querySelectorAll('#insurance-row button').forEach(b => b.onclick = () => decideInsurance(b.dataset.ins === '1'));
 $('reset-stats').onclick = () => { stats = Object.assign({}, STATS0); save('bj.stats', stats); render(); };
+$('shuffle-now').onclick = () => {
+  shuffle(); hands = []; dealer = []; phase = 'bet'; lastAnalysis = null; render();
+  setMsg(S.decks ? 'Shuffled: new shoe, counts reset to 0.' : 'Infinite shoe: nothing to shuffle.');
+};
 $('reset-shoe').onclick = () => {
   shuffle(); hands = []; dealer = []; phase = 'bet'; lastAnalysis = null;
   bankroll = S.bankroll; save('bj.bank', { bankroll });
