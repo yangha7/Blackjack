@@ -112,7 +112,7 @@ label { display: inline-flex; align-items: center; gap: 6px; }
     <button data-tab="settings">设置</button>
   </div>
   <a href="blackjack.html" class="small" style="margin-left:auto">English</a>
-  <span class="small" id="version" title="每次发布都会更新，便于识别浏览器缓存的旧版本">v1.10 · 2026-10-31</span>
+  <span class="small" id="version" title="每次发布都会更新，便于识别浏览器缓存的旧版本">v1.11 · 2026-11-05</span>
 </header>
 <main>
 
@@ -177,11 +177,6 @@ label { display: inline-flex; align-items: center; gap: 6px; }
       <div class="stat"><span>保险决策</span><b id="st-ins">–</b></div>
       <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap"><button id="reset-stats">重置统计</button><button id="shuffle-now">洗牌</button><button id="reset-shoe">新牌靴 + 重置资金</button></div>
     </div>
-    <div class="panel">
-      <h3>牌局记录</h3>
-      <div id="history" class="small">还没有牌局。结算后的每一手都会列在这里，最新的在最前；点开可看完整记录。</div>
-      <div id="play-misses" class="small" style="margin-top:8px"></div>
-    </div>
     <div class="panel" id="ev-panel">
       <h3>实时分析</h3>
       <div id="ev-body" class="small">先发一手牌。每次决策后，这里会根据牌靴中剩余的牌，显示你当时每个选项的期望值。</div>
@@ -200,6 +195,11 @@ label { display: inline-flex; align-items: center; gap: 6px; }
     <div class="panel">
       <h3>指数偏离打法（Hi-Lo） <button id="toggle-index" style="padding:2px 8px;font-size:12px">显示</button></h3>
       <div id="index-wrap" class="chart-wrap hidden"></div>
+    </div>
+    <div class="panel">
+      <h3>牌局记录</h3>
+      <div id="history" class="small">还没有牌局。结算后的每一手都会列在这里，最新的在最前；点开可看完整记录。</div>
+      <div id="play-misses" class="small" style="margin-top:8px"></div>
     </div>
   </aside>
 </div>

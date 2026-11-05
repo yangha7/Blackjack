@@ -112,7 +112,7 @@ label { display: inline-flex; align-items: center; gap: 6px; }
     <button data-tab="settings">Settings</button>
   </div>
   <a href="blackjack-zh.html" class="small" style="margin-left:auto">中文</a>
-  <span class="small" id="version" title="Bumped on every push, so a stale cached copy is easy to spot">v1.10 · 2026-10-31</span>
+  <span class="small" id="version" title="Bumped on every push, so a stale cached copy is easy to spot">v1.11 · 2026-11-05</span>
 </header>
 <main>
 
@@ -177,11 +177,6 @@ label { display: inline-flex; align-items: center; gap: 6px; }
       <div class="stat"><span>Insurance decisions</span><b id="st-ins">–</b></div>
       <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap"><button id="reset-stats">Reset session</button><button id="shuffle-now">Shuffle</button><button id="reset-shoe">New shoe + bankroll</button></div>
     </div>
-    <div class="panel">
-      <h3>Hand history</h3>
-      <div id="history" class="small">No hands yet. Settled hands are listed here, newest first; open one for its full log.</div>
-      <div id="play-misses" class="small" style="margin-top:8px"></div>
-    </div>
     <div class="panel" id="ev-panel">
       <h3>Real-time analysis</h3>
       <div id="ev-body" class="small">Deal a hand. After each decision this shows the expected value of every option you had, computed from the cards still in the shoe.</div>
@@ -200,6 +195,11 @@ label { display: inline-flex; align-items: center; gap: 6px; }
     <div class="panel">
       <h3>Index plays (Hi-Lo) <button id="toggle-index" style="padding:2px 8px;font-size:12px">show</button></h3>
       <div id="index-wrap" class="chart-wrap hidden"></div>
+    </div>
+    <div class="panel">
+      <h3>Hand history</h3>
+      <div id="history" class="small">No hands yet. Settled hands are listed here, newest first; open one for its full log.</div>
+      <div id="play-misses" class="small" style="margin-top:8px"></div>
     </div>
   </aside>
 </div>
