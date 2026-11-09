@@ -112,7 +112,7 @@ label { display: inline-flex; align-items: center; gap: 6px; }
     <button data-tab="settings">Settings</button>
   </div>
   <a href="blackjack-zh.html" class="small" style="margin-left:auto">中文</a>
-  <span class="small" id="version" title="Bumped on every push, so a stale cached copy is easy to spot">v1.11 · 2026-11-05</span>
+  <span class="small" id="version" title="Bumped on every push, so a stale cached copy is easy to spot">v1.12 · 2026-11-09</span>
 </header>
 <main>
 
@@ -1103,13 +1103,18 @@ function act(a) {
   const ok = rec.accepted.includes(a);
   if (ok) stats.correct++;
   const ctx = `${describe(h.cards)} vs ${dealer[0].rank === 'A' ? 'A' : cardValue(dealer[0])}`;
-  let text = ok ? `✓ ${ACTION_NAME[a]} is correct (${ctx})${a === rec.action ? '' : ', tied with ' + ACTION_NAME[rec.action]}.`
+  let text = ok ? `✓ ${ACTION_NAME[a]} is correct ${rec.index ? 'index play' : 'basic strategy'} (${ctx})${a === rec.action ? '' : ', tied with ' + ACTION_NAME[rec.action]}.`
                 : `✗ You chose ${ACTION_NAME[a]}; correct play is ${ACTION_NAME[rec.action]} (${ctx}).`;
   if (rec.index) text += `\nIndex play at true count ${fmtTc(rec.tc)} (basic strategy alone: ${ACTION_NAME[rec.basic]}).`;
   if (S.evMode !== 'off') {
     const { evs, approx } = analyzeHand(h);
     lastAnalysis = { evs, approx, chosen: a, ctx };
     text += `\nEV of your ${ACTION_NAME[a]}: ${fmtEv(evs[a])} per unit bet` + evVerdict(evs, a);
+    // The grade follows the chart; the EV follows the cards actually left. When they disagree, say why.
+    const best = bestAction(evs);
+    if (ok && evs[best] - evs[a] >= 0.005) text += approx.includes(a) || approx.includes(best)
+      ? ` The split value is an estimate without re-splits, so the gap is rough; ${ACTION_NAME[a]} was still the right call.`
+      : ` That comes from the make-up of this particular shoe, which no chart or count rule can see, so ${ACTION_NAME[a]} was still the right call.`;
   }
   if (!ok) {
     stats.misses[ctx] = (stats.misses[ctx] || 0) + 1;

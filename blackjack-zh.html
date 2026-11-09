@@ -112,7 +112,7 @@ label { display: inline-flex; align-items: center; gap: 6px; }
     <button data-tab="settings">设置</button>
   </div>
   <a href="blackjack.html" class="small" style="margin-left:auto">English</a>
-  <span class="small" id="version" title="每次发布都会更新，便于识别浏览器缓存的旧版本">v1.11 · 2026-11-05</span>
+  <span class="small" id="version" title="每次发布都会更新，便于识别浏览器缓存的旧版本">v1.12 · 2026-11-09</span>
 </header>
 <main>
 
@@ -1103,13 +1103,18 @@ function act(a) {
   const ok = rec.accepted.includes(a);
   if (ok) stats.correct++;
   const ctx = `${describe(h.cards)} 对 ${dealer[0].rank === 'A' ? 'A' : cardValue(dealer[0])}`;
-  let text = ok ? `✓ ${ACTION_NAME[a]}正确（${ctx}）${a === rec.action ? '' : '，与' + ACTION_NAME[rec.action] + '并列'}。`
+  let text = ok ? `✓ ${ACTION_NAME[a]}符合${rec.index ? '指数偏离打法' : '基本策略'}（${ctx}）${a === rec.action ? '' : '，与' + ACTION_NAME[rec.action] + '并列'}。`
                 : `✗ 你选了${ACTION_NAME[a]}；正确打法是${ACTION_NAME[rec.action]}（${ctx}）。`;
   if (rec.index) text += `\n真数 ${fmtTc(rec.tc)} 下的指数打法（单纯基本策略：${ACTION_NAME[rec.basic]}）。`;
   if (S.evMode !== 'off') {
     const { evs, approx } = analyzeHand(h);
     lastAnalysis = { evs, approx, chosen: a, ctx };
     text += `\n你的${ACTION_NAME[a]}的期望值：每单位注 ${fmtEv(evs[a])}` + evVerdict(evs, a);
+    // The grade follows the chart; the EV follows the cards actually left. When they disagree, say why.
+    const best = bestAction(evs);
+    if (ok && evs[best] - evs[a] >= 0.005) text += approx.includes(a) || approx.includes(best)
+      ? `分牌的期望值是不含再分牌的估计值，差距只是粗略的；${ACTION_NAME[a]}仍然是正确的选择。`
+      : `这是当前牌靴剩余牌的组成所致，策略表和计数规则都看不到它，所以${ACTION_NAME[a]}仍然是正确的选择。`;
   }
   if (!ok) {
     stats.misses[ctx] = (stats.misses[ctx] || 0) + 1;
